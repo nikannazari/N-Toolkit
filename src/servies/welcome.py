@@ -26,10 +26,10 @@ except ImportError as e:
 # ─────────────────────────────────────────────
 # Configuration
 # ─────────────────────────────────────────────
-FRAMEWORK_NAME = "N-Toolkit"   # change to your framework's name
+FRAMEWORK_NAME = "N-Toolkit"   # Updated name
 FRAMEWORK_VERSION = "1.0.0"
-FRAMEWORK_AUTHOR = "nikan nazari"
-TAGLINE = "A Powerful Linux Toolkit Framework"
+FRAMEWORK_AUTHOR = "Your Name"
+TAGLINE = "The Ultimate Linux Utility Framework"  # Updated tagline
 
 AVAILABLE_TOOLS: List[str] = [
     "calculator++",
@@ -42,15 +42,16 @@ AVAILABLE_TOOLS: List[str] = [
 
 TIPS: List[str] = [
     "Type 'help' to see all available commands.",
-    "Use 'tools list' to view loaded tools.",
-    "Press TAB for auto-completion.",
+    "Use 'run <tool>' to launch a tool's Web UI.",
+    "Press TAB for auto-completion (if supported).",
     "Use 'clear' to clean the terminal screen.",
     "Type 'exit' or press Ctrl+C to quit.",
     "You can chain commands with the ';' separator.",
     "Use 'history' to recall previous commands.",
 ]
 
-BANNER_FONTS = ["slant", "big", "standard", "doom", "larry3d"]
+# 'slant' and 'standard' look great with hyphens
+BANNER_FONTS = ["slant", "standard", "big", "doom", "larry3d"]
 
 
 # ─────────────────────────────────────────────
