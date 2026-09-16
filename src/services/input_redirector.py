@@ -3,7 +3,7 @@ input_redirector.py - Routes input, launches Streamlit in background, and manage
 """
 import os
 import sys
-import importlib
+import importlib.util
 import subprocess
 from colorama import Fore, Style
 
@@ -14,30 +14,37 @@ def redirect_to_tool(tool_name: str, args: list) -> bool:
     """
     Launches the Streamlit app and enters a tool-specific prompt loop.
     """
-    safe_name = tool_name.replace("++", "_pp").replace("-", "_")
-    tool_pkg_path = f"core.tools.{safe_name}"
-    validator_module_path = f"{tool_pkg_path}.{safe_name}_input_validator"
-    app_file_path = os.path.join("core", "tools", safe_name, f"{safe_name}_app.py")
+    # 1. Define paths exactly as they are in the OS (with the ++)
+    tool_dir = os.path.join("core", "tools", tool_name)
+    validator_file_path = os.path.join(tool_dir, f"{tool_name}_input_validator.py")
+    app_file_path = os.path.join(tool_dir, f"{tool_name}_app.py")
     
     try:
-        # 1. Import the tool's specific validator
-        validator_mod = importlib.import_module(validator_module_path)
+        # 2. Check if files exist before trying to load them
+        if not os.path.exists(validator_file_path):
+            print(f"{Fore.RED}  [Error] Validator not found at: {validator_file_path}{Style.RESET_ALL}\n")
+            return False
+        if not os.path.exists(app_file_path):
+            print(f"{Fore.RED}  [Error] Streamlit app not found at: {app_file_path}{Style.RESET_ALL}\n")
+            return False
+
+        # 3. Dynamically load the validator module from its file path
+        # This bypasses Python's rule against '+' in module names
+        spec = importlib.util.spec_from_file_location(f"{tool_name}_validator", validator_file_path)
+        validator_mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(validator_mod)
         
-        # 2. Validate the input
+        # 4. Validate the input
         is_valid, mode_msg = validator_mod.validate(args)
         
         if not is_valid:
             print(f"{Fore.RED}  [Tool Error] {mode_msg}{Style.RESET_ALL}\n")
             return False
             
-        # 3. Check if app file exists
-        if not os.path.exists(app_file_path):
-            print(f"{Fore.RED}  [Error] Streamlit app file not found at: {app_file_path}{Style.RESET_ALL}\n")
-            return False
-            
         print(f"{Fore.CYAN}  → Launching Streamlit Web UI for '{tool_name}'...{Style.RESET_ALL}")
         
-        # 4. Start Streamlit in a background subprocess
+        # 5. Start Streamlit in a background subprocess
+        # We pass the exact file path to streamlit
         streamlit_proc = subprocess.Popen(
             ["streamlit", "run", app_file_path],
             stdout=subprocess.DEVNULL,
@@ -46,7 +53,7 @@ def redirect_to_tool(tool_name: str, args: list) -> bool:
         
         print(f"{Fore.GREEN}  ✓ Web UI launched in your browser.{Style.RESET_ALL}")
         
-        # 5. Print Tool Help & Enter Tool Prompt Loop
+        # 6. Print Tool Help & Enter Tool Prompt Loop
         print(f"{Fore.YELLOW}  ════════════════════════════════════════════════{Style.RESET_ALL}")
         print(f"{Fore.YELLOW}  {tool_name} is running in the background.{Style.RESET_ALL}")
         print(f"{Fore.LIGHTBLACK_EX}  Type 'exit', 'q', 'Q', or 'quit' to close the tool{Style.RESET_ALL}")
@@ -56,7 +63,7 @@ def redirect_to_tool(tool_name: str, args: list) -> bool:
         # Define the tool-specific prompt
         tool_prompt = f"{Fore.MAGENTA}{tool_name}{Style.RESET_ALL}{Fore.CYAN} ❯{Style.RESET_ALL} "
 
-        # 6. Nested Prompt Loop for the Tool
+        # 7. Nested Prompt Loop for the Tool
         while True:
             try:
                 user_cmd = input(tool_prompt).strip()
@@ -69,7 +76,6 @@ def redirect_to_tool(tool_name: str, args: list) -> bool:
                     streamlit_proc.terminate()
                     streamlit_proc.wait() # Wait for it to cleanly close
                     
-                    # Updated this line to use FRAMEWORK_NAME
                     print(f"{Fore.GREEN}  ✓ Tool closed. Returning to {FRAMEWORK_NAME}.{Style.RESET_ALL}\n")
                     break 
                 
@@ -91,9 +97,6 @@ def redirect_to_tool(tool_name: str, args: list) -> bool:
 
         return True
 
-    except ModuleNotFoundError:
-        print(f"{Fore.RED}  [Error] Validator module '{safe_name}_input_validator.py' not found.{Style.RESET_ALL}\n")
-        return False
     except Exception as e:
         print(f"{Fore.RED}  [Error] An exception occurred while running '{tool_name}': {e}{Style.RESET_ALL}\n")
         return False
