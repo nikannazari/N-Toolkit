@@ -8,9 +8,12 @@ FRAMEWORK_VERSION = "1.0.0"
 PROMPT_TEXT = f"{FRAMEWORK_NAME} ❯ "
 
 # Built-in shell commands (handled directly by prompt.py)
+# In src/commands.py, update the BUILTIN_COMMANDS dictionary:
 BUILTIN_COMMANDS = {
     "help": "Show this help menu and available options",
     "tools": "List all available integrated tools",
+    "run <tool> ui": "Launch the Streamlit Web UI for a tool",
+    "run <tool> <args>": "Run the tool in CLI mode with arguments",
     "clear": "Clear the terminal screen",
     "history": "Show command history",
     "exit": "Exit the framework safely"
