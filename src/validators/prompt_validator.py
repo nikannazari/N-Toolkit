@@ -2,7 +2,7 @@
 prompt_validator.py - Validates the syntax of user input.
 """
 
-from src.commands import TOOL_RUN_PREFIX
+from constants.commands import TOOL_RUN_PREFIX
 
 def validate_prompt_syntax(user_input: str) -> tuple[bool, tuple, str]:
     """

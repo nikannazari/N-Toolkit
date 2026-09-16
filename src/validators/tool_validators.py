@@ -2,7 +2,7 @@
 tool_validators.py - Checks if a requested tool exists in the framework.
 """
 import os
-from src.commands import AVAILABLE_TOOLS
+from constants.commands import AVAILABLE_TOOLS
 
 def validate_tool_exists(tool_name: str) -> bool:
     """Checks if the tool is in the available tools list."""

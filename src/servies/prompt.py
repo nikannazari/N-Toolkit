@@ -7,7 +7,7 @@ import sys
 from colorama import Fore, Style, init
 
 # Import from our new modules
-from src.commands import BUILTIN_COMMANDS, AVAILABLE_TOOLS, FRAMEWORK_NAME
+from constants.commands import BUILTIN_COMMANDS, AVAILABLE_TOOLS, FRAMEWORK_NAME
 from src.servies.input_handler import handle_input
 
 init(autoreset=True)
