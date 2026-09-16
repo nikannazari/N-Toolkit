@@ -19,12 +19,12 @@ BUILTIN_COMMANDS = {
 
 # Available tools
 AVAILABLE_TOOLS = [
-    "calculator++",
-    "ffmpeg",
-    "autogit",
-    "sysinfo",
-    "nettools",
-    "filemanager"
+    "calculator++"
+    # "ffmpeg",
+    # "autogit",
+    # "sysinfo",
+    # "nettools",
+    # "filemanager"
 ]
 
 # Tool execution prefix
