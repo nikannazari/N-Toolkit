@@ -7,7 +7,7 @@ from colorama import Fore, Style
 # Import our new pipeline modules
 from src.validators.prompt_validator import validate_prompt_syntax
 from src.validators.tool_validators import validate_tool_exists
-from src.servies.input_redirector import redirect_to_tool
+from src.services.input_redirector import redirect_to_tool
 
 def handle_input(user_input: str) -> bool:
     """

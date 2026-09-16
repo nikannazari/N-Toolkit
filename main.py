@@ -1,6 +1,6 @@
 # main.py
-from src.servies.welcome import welcome
-from src.servies.prompt import start_prompt, show_options
+from src.services.welcome import welcome
+from src.services.prompt import start_prompt, show_options
 
 def main():
     # 1. Show the spectacular welcome screen
