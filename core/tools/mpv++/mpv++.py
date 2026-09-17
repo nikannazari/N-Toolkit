@@ -1,46 +1,39 @@
-#!/usr/bin/env python3
-"""mpv++ — a small spectacular CLI wrapper around mpv.
-
-Usage:
-    Run this file, then at the `mpv++>` prompt type either a number
-    shortcut or a full command. Examples:
-
-        mpv++> 1                       # play random music (interactive)
-        mpv++> random music ~/Music
-        mpv++> random video saved jazz
-        mpv++> play ~/Movies/foo.mp4
-        mpv++> play jazz song.mp3
-        mpv++> shuffle saved jazz
-        mpv++> add ~/Music jazz
-        mpv++> list
-        mpv++> delete jazz
-        mpv++> help
-        mpv++> exit
 """
-
+mpv++.py - Core logic of mpv++.
+"""
 import os
 import json
 import random
 import shlex
 import subprocess
 import sys
-
+import importlib.util
 from colorama import init as colorama_init, Fore, Style
 import pyfiglet
 
-from input_handler import (
-    validate_directory, validate_file, validate_name,
-    ensure_mpv, filter_files, MUSIC_EXTS, VIDEO_EXTS,
-)
-
 colorama_init()
 
+# Dynamically load the validators
+TOOL_DIR = os.path.dirname(os.path.abspath(__file__))
+def _load_validators():
+    filepath = os.path.join(TOOL_DIR, "mpv++_validators.py")
+    spec = importlib.util.spec_from_file_location("mpv_validators", filepath)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+_validators = _load_validators()
+validate_directory = _validators.validate_directory
+validate_file = _validators.validate_file
+validate_name = _validators.validate_name
+ensure_mpv = _validators.ensure_mpv
+filter_files = _validators.filter_files
+MUSIC_EXTS = _validators.MUSIC_EXTS
+VIDEO_EXTS = _validators.VIDEO_EXTS
+
 # ── paths ────────────────────────────────────────────────────────────────
-current_dir = subprocess.run("pwd")
-print(current_dir)
 CONFIG_DIR  = os.path.expanduser("~/.config/mpv++")
 CONFIG_FILE = os.path.join(CONFIG_DIR, "saved_paths.json")
-
 
 # ── persistence ──────────────────────────────────────────────────────────
 def ensure_config():
@@ -49,7 +42,6 @@ def ensure_config():
         with open(CONFIG_FILE, "w") as f:
             json.dump({}, f)
 
-
 def load_paths() -> dict:
     try:
         with open(CONFIG_FILE) as f:
@@ -57,18 +49,15 @@ def load_paths() -> dict:
     except (json.JSONDecodeError, FileNotFoundError):
         return {}
 
-
 def save_paths(data: dict):
     with open(CONFIG_FILE, "w") as f:
         json.dump(data, f, indent=2)
-
 
 # ── color helpers ────────────────────────────────────────────────────────
 def info(msg):  print(f"{Fore.CYAN}{msg}{Style.RESET_ALL}")
 def ok(msg):    print(f"{Fore.GREEN}✔ {msg}{Style.RESET_ALL}")
 def warn(msg):  print(f"{Fore.YELLOW}⚡ {msg}{Style.RESET_ALL}")
 def err(msg):   print(f"{Fore.RED}✘ {msg}{Style.RESET_ALL}")
-
 
 # ── banner ───────────────────────────────────────────────────────────────
 def banner():
@@ -79,7 +68,6 @@ def banner():
     print(f"{Style.DIM}   random play • saved paths • file-specific playback • shuffle{Style.RESET_ALL}")
     print(f"{Style.DIM}   type 'help' or '?' for commands   |   'exit' to quit{Style.RESET_ALL}")
     print()
-
 
 # ── help ─────────────────────────────────────────────────────────────────
 def help_text():
@@ -92,14 +80,13 @@ def help_text():
         ("4  list",                              "show saved directories"),
         ("5  add [path] [name]",                 "save a new directory"),
         ("6  delete <name>",                     "remove a saved directory"),
-        ("7  shuffle [path|saved <name>]",        "play whole directory shuffled"),
-        ("8  help  /  ?",                         "show this help"),
-        ("9  exit  /  quit",                      "leave mpv++"),
+        ("7  shuffle [path|saved <name>]",       "play whole directory shuffled"),
+        ("8  help  /  ?",                        "show this help"),
+        ("9  exit  /  quit",                     "leave mpv++"),
     ]
     for cmd, desc in rows:
         print(f"{Fore.YELLOW}│{Style.RESET_ALL} {Fore.CYAN}{cmd:<40}{Style.RESET_ALL} {Style.DIM}{desc}{Style.RESET_ALL}")
     print(f"{Fore.YELLOW}╰──────────────────────────────────────────────────────────────╯{Style.RESET_ALL}\n")
-
 
 # ── playback ─────────────────────────────────────────────────────────────
 def play_file(filepath: str):
@@ -119,14 +106,12 @@ def play_file(filepath: str):
     except KeyboardInterrupt:
         print(); warn("Playback interrupted.")
 
-
 def play_random(directory: str, kind: str):
     files = filter_files(directory, kind)
     if not files:
         err(f"No {kind} files found in: {directory}")
         return
     play_file(random.choice(files))
-
 
 def play_shuffle(directory: str):
     files = filter_files(directory, "music") + filter_files(directory, "video")
@@ -140,7 +125,6 @@ def play_shuffle(directory: str):
     except KeyboardInterrupt:
         print(); warn("Playback interrupted.")
 
-
 # ── interactive prompts ──────────────────────────────────────────────────
 def ask_directory(prompt="Directory path: ") -> str:
     while True:
@@ -152,7 +136,6 @@ def ask_directory(prompt="Directory path: ") -> str:
             return result
         err(result)
 
-
 def ask_name(existing: dict, prompt="Name: ") -> str:
     while True:
         raw = input(f"{Fore.CYAN}{prompt}{Style.RESET_ALL}").strip()
@@ -160,7 +143,6 @@ def ask_name(existing: dict, prompt="Name: ") -> str:
         if ok_:
             return result
         err(result)
-
 
 def ask_kind() -> str:
     while True:
@@ -170,7 +152,6 @@ def ask_kind() -> str:
         if raw in ("v", "video"):
             return "video"
         err("Type 'm' or 'v'.")
-
 
 def ask_play_target() -> list:
     raw = input(
@@ -183,7 +164,6 @@ def ask_play_target() -> list:
     except ValueError as e:
         err(f"Parse error: {e}")
         return []
-
 
 # ── actions ───────────────────────────────────────────────────────────────
 def act_random(kind: str, args):
@@ -207,21 +187,17 @@ def act_random(kind: str, args):
         if directory:
             play_random(directory, kind)
 
-
 def act_play(args):
     if not args:
         args = ask_play_target()
         if not args:
             return
     paths = load_paths()
-    # play <saved_name> <filename>
     if len(args) >= 2 and args[0] in paths:
         candidate = os.path.join(paths[args[0]], args[1])
         play_file(candidate)
         return
-    # play <full-path>
     play_file(args[0])
-
 
 def act_list():
     paths = load_paths()
@@ -234,7 +210,6 @@ def act_list():
               f"{Fore.CYAN}{name}{Style.RESET_ALL}")
         print(f"{Fore.YELLOW}│{Style.RESET_ALL}      {Style.DIM}{path}{Style.RESET_ALL}")
     print(f"{Fore.YELLOW}╰─────────────────────────────────────────────╯{Style.RESET_ALL}\n")
-
 
 def act_add(args):
     paths = load_paths()
@@ -260,7 +235,6 @@ def act_add(args):
     save_paths(paths)
     ok(f"Saved '{name}' → {directory}")
 
-
 def act_delete(args):
     paths = load_paths()
     if not paths:
@@ -277,7 +251,6 @@ def act_delete(args):
         ok(f"Deleted '{name}'.")
     else:
         err(f"'{name}' not found.")
-
 
 def act_shuffle(args):
     paths = load_paths()
@@ -299,7 +272,6 @@ def act_shuffle(args):
         directory = ask_directory()
         if directory:
             play_shuffle(directory)
-
 
 # ── dispatch ──────────────────────────────────────────────────────────────
 NUM_SHORTCUTS = {
@@ -325,7 +297,6 @@ CMD_ALIASES = {
     "exit":   "exit",   "quit": "exit", "q": "exit",
 }
 
-
 def dispatch(cmd: str, args: list):
     target = CMD_ALIASES.get(cmd.lower())
     if target is None:
@@ -349,8 +320,7 @@ def dispatch(cmd: str, args: list):
     elif target == "shuffle": act_shuffle(args)
     elif target == "help":    help_text()
     elif target == "exit":
-        ok("Bye!"); sys.exit(0)
-
+        return True # Signal to exit
 
 def parse(raw: str):
     """Return (cmd, args) or None."""
@@ -367,35 +337,3 @@ def parse(raw: str):
     if not parts:
         return None
     return (parts[0], parts[1:])
-
-
-def prompt():
-    return input(
-        f"{Fore.CYAN}{Style.BRIGHT}mpv++{Style.RESET_ALL}"
-        f"{Fore.CYAN}> {Style.RESET_ALL}"
-    )
-
-
-# ── main loop ─────────────────────────────────────────────────────────────
-def main():
-    ensure_config()
-    banner()
-    if not ensure_mpv():
-        warn("'mpv' binary not found. Install it before playing.")
-    while True:
-        try:
-            raw = prompt()
-        except (EOFError, KeyboardInterrupt):
-            print(); ok("Bye!"); break
-        parsed = parse(raw)
-        if parsed is None:
-            continue
-        cmd, args = parsed
-        try:
-            dispatch(cmd, args)
-        except KeyboardInterrupt:
-            print(); warn("Interrupted.")
-
-
-if __name__ == "__main__":
-    main()
