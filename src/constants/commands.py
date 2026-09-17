@@ -19,7 +19,8 @@ BUILTIN_COMMANDS = {
 
 # Available tools
 AVAILABLE_TOOLS = [
-    "calculator++"
+    "calculator++",
+    "mpv++"
     # "ffmpeg",
     # "autogit",
     # "sysinfo",
