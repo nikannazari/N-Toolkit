@@ -33,11 +33,11 @@ TAGLINE = "The Ultimate Linux Utility Framework"  # Updated tagline
 
 AVAILABLE_TOOLS: List[str] = [
     "calculator++",
-    "ffmpeg",
-    "autogit",
-    "sysinfo",
-    "filemanager",
-    "nettools",
+    # "ffmpeg",
+    # "autogit",
+    # "sysinfo",
+    # "filemanager",
+    # "nettools",
 ]
 
 TIPS: List[str] = [
