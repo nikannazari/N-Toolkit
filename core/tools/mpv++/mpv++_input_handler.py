@@ -1,54 +1,71 @@
+"""
+mpv++_input_handler.py - N-Toolkit entry point for mpv++.
+"""
 import os
-import shutil
-from typing import List, Tuple
+import sys
+import importlib.util
+from colorama import init as colorama_init, Fore, Style
 
-MUSIC_EXTS = {".mp3", ".flac", ".wav", ".ogg", ".m4a", ".opus", ".aac", ".wma"}
-VIDEO_EXTS = {".mp4", ".mkv", ".avi", ".mov", ".webm", ".flv",
-              ".wmv", ".mpg", ".mpeg", ".ts", ".m4v", ".webm"}
+TOOL_DIR = os.path.dirname(os.path.abspath(__file__))
 
+def _load_module(filename, module_name):
+    """Helper to dynamically load the tool's core logic."""
+    filepath = os.path.join(TOOL_DIR, filename)
+    spec = importlib.util.spec_from_file_location(module_name, filepath)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
 
-def validate_directory(path: str) -> Tuple[bool, str]:
-    if not path or not path.strip():
-        return False, "Path is empty."
-    path = os.path.expanduser(path.strip())
-    if not os.path.exists(path):
-        return False, f"Path does not exist: {path}"
-    if not os.path.isdir(path):
-        return False, f"Not a directory: {path}"
-    if not os.access(path, os.R_OK):
-        return False, f"Directory not readable: {path}"
-    return True, os.path.abspath(path)
+# Load the core mpv++ logic
+mpv = _load_module("mpv++.py", "mpv_core")
 
-
-def validate_file(path: str) -> Tuple[bool, str]:
-    if not path or not path.strip():
-        return False, "File path is empty."
-    path = os.path.expanduser(path.strip())
-    if not os.path.isfile(path):
-        return False, f"File not found: {path}"
-    return True, os.path.abspath(path)
-
-
-def validate_name(name: str, existing: dict) -> Tuple[bool, str]:
-    if not name or not name.strip():
-        return False, "Name cannot be empty."
-    name = name.strip()
-    if any(c in name for c in "/\\:"):
-        return False, "Name cannot contain '/', '\\', or ':'."
-    if name in existing:
-        return False, f"'{name}' already exists. Pick another or delete the old one."
-    return True, name
-
-
-def ensure_mpv() -> bool:
-    return shutil.which("mpv") is not None
-
-
-def filter_files(directory: str, kind: str) -> List[str]:
-    exts = MUSIC_EXTS if kind == "music" else VIDEO_EXTS
-    out = []
-    for entry in os.listdir(directory):
-        full = os.path.join(directory, entry)
-        if os.path.isfile(full) and os.path.splitext(entry)[1].lower() in exts:
-            out.append(full)
-    return out
+def start(args: list):
+    """
+    Entry point called by N-Toolkit.
+    """
+    mpv.ensure_config()
+    mpv.banner()
+    
+    if not mpv.ensure_mpv():
+        mpv.warn("'mpv' binary not found. Install it before playing.")
+    
+    # Handle args if passed directly from N-Toolkit
+    # e.g., N-Toolkit ❯ run mpv++ random music ~/Music
+    if args:
+        parsed = mpv.parse(" ".join(args))
+        if parsed:
+            cmd, cmd_args = parsed
+            if cmd in ("exit", "quit", "q"):
+                return True
+            exit_signal = mpv.dispatch(cmd, cmd_args)
+            if exit_signal:
+                return True
+    
+    # mpv++ own prompt loop
+    while True:
+        try:
+            raw = input(
+                f"{Fore.CYAN}{Style.BRIGHT}mpv++{Style.RESET_ALL}"
+                f"{Fore.CYAN}> {Style.RESET_ALL}"
+            ).strip()
+        except (EOFError, KeyboardInterrupt):
+            print(f"\n{Fore.CYAN}  Returning to N-Toolkit...{Style.RESET_ALL}\n")
+            return True
+            
+        parsed = mpv.parse(raw)
+        if parsed is None:
+            continue
+            
+        cmd, cmd_args = parsed
+        
+        if cmd in ("exit", "quit", "q"):
+            print(f"\n{Fore.CYAN}  Returning to N-Toolkit...{Style.RESET_ALL}\n")
+            return True
+            
+        try:
+            exit_signal = mpv.dispatch(cmd, cmd_args)
+            if exit_signal:
+                print(f"\n{Fore.CYAN}  Returning to N-Toolkit...{Style.RESET_ALL}\n")
+                return True
+        except KeyboardInterrupt:
+            print(); mpv.warn("Interrupted.")
