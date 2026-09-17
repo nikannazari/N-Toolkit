@@ -32,7 +32,10 @@ MUSIC_EXTS = _validators.MUSIC_EXTS
 VIDEO_EXTS = _validators.VIDEO_EXTS
 
 # ── paths ────────────────────────────────────────────────────────────────
-CONFIG_DIR  = os.path.expanduser("~/.config/mpv++")
+# TOOL_DIR is: <project_root>/core/tools/mpv++
+# We go up 3 directories to get to <project_root>
+PROJECT_ROOT = os.path.abspath(os.path.join(TOOL_DIR, "..", "..", ".."))
+CONFIG_DIR = os.path.join(PROJECT_ROOT, "saved_data", "mpv++")
 CONFIG_FILE = os.path.join(CONFIG_DIR, "saved_paths.json")
 
 # ── persistence ──────────────────────────────────────────────────────────
@@ -41,6 +44,8 @@ def ensure_config():
     if not os.path.exists(CONFIG_FILE):
         with open(CONFIG_FILE, "w") as f:
             json.dump({}, f)
+        # Optional: Print the path so you know exactly where it was created!
+        info(f"Created config at: {CONFIG_FILE}")
 
 def load_paths() -> dict:
     try:
@@ -50,6 +55,8 @@ def load_paths() -> dict:
         return {}
 
 def save_paths(data: dict):
+    # Ensure the directory exists just in case it was deleted
+    os.makedirs(CONFIG_DIR, exist_ok=True)
     with open(CONFIG_FILE, "w") as f:
         json.dump(data, f, indent=2)
 
