@@ -1,5 +1,5 @@
 """
-input_redirector.py - Loads and launches individual tools.
+input_redirector.py - Loads and starts individual tools.
 """
 
 import importlib.util
@@ -10,48 +10,42 @@ from colorama import Fore, Style
 from src.constants.commands import FRAMEWORK_NAME
 
 
-def redirect_to_tool(tool_name: str, args: list[str]) -> bool:
+def redirect_to_tool(tool_name: str, args: list) -> bool:
     """
-    Loads the requested tool's input handler and transfers control to it.
-
-    Every tool is responsible for its own:
-        - prompt
-        - input handling
-        - validation
-        - commands
-        - execution
+    Load the tool-specific input handler and transfer control to it.
     """
 
-    tool_dir = os.path.join("core", "tools", tool_name)
+    tool_dir = os.path.join(
+        "core",
+        "tools",
+        tool_name
+    )
 
-    input_handler_path = os.path.join(
+    handler_file = os.path.join(
         tool_dir,
         f"{tool_name}_input_handler.py"
     )
 
-    if not os.path.isfile(input_handler_path):
+    if not os.path.exists(handler_file):
         print(
             f"{Fore.RED}"
-            f"  [Error] Input handler not found:"
-            f" {input_handler_path}"
+            f"  [Error] Input handler not found at:"
+            f" {handler_file}"
             f"{Style.RESET_ALL}\n"
         )
         return False
 
     try:
-        # Create a unique module name for dynamic loading.
-        module_name = f"{tool_name}_input_handler"
-
+        # Dynamically load the tool input handler.
         spec = importlib.util.spec_from_file_location(
-            module_name,
-            input_handler_path
+            f"{tool_name}_input_handler",
+            handler_file
         )
 
         if spec is None or spec.loader is None:
             print(
                 f"{Fore.RED}"
-                f"  [Error] Could not load input handler for "
-                f"'{tool_name}'."
+                f"  [Error] Could not load input handler."
                 f"{Style.RESET_ALL}\n"
             )
             return False
@@ -60,23 +54,23 @@ def redirect_to_tool(tool_name: str, args: list[str]) -> bool:
 
         spec.loader.exec_module(handler_module)
 
-        # Every tool must expose a `start()` function.
+        # Every tool input handler must provide start().
         if not hasattr(handler_module, "start"):
             print(
                 f"{Fore.RED}"
-                f"  [Error] Tool '{tool_name}' does not provide "
-                f"a start() function."
+                f"  [Error] '{tool_name}_input_handler.py' "
+                f"must contain a start() function."
                 f"{Style.RESET_ALL}\n"
             )
             return False
 
         print(
             f"{Fore.GREEN}"
-            f"  ✓ {tool_name} loaded successfully."
+            f"  ✓ {tool_name} loaded."
             f"{Style.RESET_ALL}\n"
         )
 
-        # Transfer control completely to the tool.
+        # Transfer control to the tool.
         result = handler_module.start(args)
 
         print(
@@ -85,12 +79,13 @@ def redirect_to_tool(tool_name: str, args: list[str]) -> bool:
             f"{Style.RESET_ALL}\n"
         )
 
-        return bool(result) if result is not None else True
+        return True if result is None else bool(result)
 
     except Exception as e:
         print(
             f"{Fore.RED}"
-            f"  [Error] Failed to launch '{tool_name}': {e}"
+            f"  [Error] An exception occurred while running "
+            f"'{tool_name}': {e}"
             f"{Style.RESET_ALL}\n"
         )
 

@@ -1,14 +1,10 @@
 """
-calculator++.py - Core logic for Calculator++.
+calculator++.py - Core logic of Calculator++.
 """
 
 
 class Calculator:
-    """
-    Core calculator logic.
-
-    This class contains no CLI or input handling.
-    """
+    """Core Calculator++ operations."""
 
     @staticmethod
     def add(a: float, b: float) -> float:
@@ -25,6 +21,8 @@ class Calculator:
     @staticmethod
     def divide(a: float, b: float) -> float:
         if b == 0:
-            raise ZeroDivisionError("Cannot divide by zero.")
+            raise ZeroDivisionError(
+                "Cannot divide by zero."
+            )
 
         return a / b
