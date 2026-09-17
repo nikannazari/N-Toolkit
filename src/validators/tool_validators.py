@@ -1,15 +1,41 @@
 """
-tool_validators.py - Checks if a requested tool exists in the framework.
+tool_validators.py - Validates and locates N-Toolkit tools.
 """
+
 import os
+
 from constants.commands import AVAILABLE_TOOLS
 
+
 def validate_tool_exists(tool_name: str) -> bool:
-    """Checks if the tool is in the available tools list."""
+    """
+    Check whether a tool is registered in N-Toolkit.
+    """
+
     return tool_name in AVAILABLE_TOOLS
 
+
 def get_tool_path(tool_name: str) -> str:
-    """Returns the expected file path for the tool."""
-    # Convert special chars like ++ to _ for python module names
-    safe_name = tool_name.replace("++", "_pp").replace("-", "_")
-    return os.path.join("core", "tools", f"{safe_name}.py")
+    """
+    Return the main Python file path of a tool.
+    """
+
+    return os.path.join(
+        "core",
+        "tools",
+        tool_name,
+        f"{tool_name}.py"
+    )
+
+
+def get_tool_input_handler_path(tool_name: str) -> str:
+    """
+    Return the input handler path of a tool.
+    """
+
+    return os.path.join(
+        "core",
+        "tools",
+        tool_name,
+        f"{tool_name}_input_handler.py"
+    )
