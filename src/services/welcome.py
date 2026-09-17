@@ -28,7 +28,7 @@ except ImportError as e:
 # ─────────────────────────────────────────────
 FRAMEWORK_NAME = "N-Toolkit"   # Updated name
 FRAMEWORK_VERSION = "1.0.0"
-FRAMEWORK_AUTHOR = "Your Name"
+FRAMEWORK_AUTHOR = "Nikan Nazari"
 TAGLINE = "The Ultimate Linux Utility Framework"  # Updated tagline
 
 AVAILABLE_TOOLS: List[str] = [
