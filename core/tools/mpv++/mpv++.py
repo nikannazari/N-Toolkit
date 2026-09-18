@@ -195,20 +195,20 @@ def ask_play_target() -> list:
 # ── actions ───────────────────────────────────────────────────────────────
 def act_random(kind: str, args):
     paths = load_paths()
-    if args and args[0] == "saved":
-        if len(args) < 2:
-            err("Usage: random <music|video> saved <name>")
-            return
-        name = args[1]
-        if name not in paths:
-            err(f"No saved directory named '{name}'.")
-            return
-        play_random(paths[name], kind)
-    elif args:
-        ok_, result = validate_directory(args[0])
-        if not ok_:
-            err(result); return
-        play_random(result, kind)
+    
+    if args:
+        target = args[0]
+        
+        if target in paths:
+            play_random(paths[target], kind)
+            
+        else:
+            ok_, result = validate_directory(target)
+            if not ok_:
+                err(result)
+                return
+            play_random(result, kind)
+            
     else:
         directory = ask_directory()
         if directory:
@@ -281,20 +281,17 @@ def act_delete(args):
 
 def act_shuffle(args):
     paths = load_paths()
-    if args and args[0] == "saved":
-        if len(args) < 2:
-            err("Usage: shuffle saved <name>")
-            return
-        name = args[1]
-        if name not in paths:
-            err(f"No saved directory named '{name}'.")
-            return
-        play_shuffle(paths[name])
-    elif args:
-        ok_, result = validate_directory(args[0])
-        if not ok_:
-            err(result); return
-        play_shuffle(result)
+    if args:
+        target = args[0]        
+        if target in paths:
+            play_shuffle(paths[target])            
+        else:
+            ok_, result = validate_directory(target)
+            if not ok_:
+                err(result)
+                return
+            play_shuffle(result)
+
     else:
         directory = ask_directory()
         if directory:
