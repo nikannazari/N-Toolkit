@@ -162,7 +162,7 @@ def start(args: list):
 
     print(
         f"{Fore.MAGENTA}{Style.BRIGHT}"
-        "\n  ╭──────────── Calculator++ ────────────╮"
+        "\n  ╭──────────── Calculator++ ─────────────╮"
         f"{Style.RESET_ALL}"
     )
 

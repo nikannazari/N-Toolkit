@@ -74,25 +74,25 @@ def banner():
         print(f"{palette[i % len(palette)]}{line}{Style.RESET_ALL}")
     print(
         f"{Fore.MAGENTA}{Style.BRIGHT}"
-        "\n  ╭──────────── mpv++ ─────────────────╮"
+        "\n  ╭──────────── mpv++ ────────────────────╮"
         f"{Style.RESET_ALL}"
     )
 
     print(
         f"{Fore.MAGENTA}"
-        "  │ Type 'help' for commands.          │"
+        "  │ Type 'help' for commands.             │"
         f"{Style.RESET_ALL}"
     )
 
     print(
         f"{Fore.MAGENTA}"
-        "  │ Type 'exit' to return to N-Toolkit.│"
+        "  │ Type 'exit' to return to N-Toolkit.   │"
         f"{Style.RESET_ALL}"
     )
 
     print(
         f"{Fore.MAGENTA}"
-        "  ╰────────────────────────────────────╯"
+        "  ╰───────────────────────────────────────╯"
         f"{Style.RESET_ALL}\n"
     )
 
