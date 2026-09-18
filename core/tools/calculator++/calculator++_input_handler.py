@@ -168,7 +168,7 @@ def start(args: list):
 
     print(
         f"{Fore.MAGENTA}"
-        "  │ Type 'help' for commands.             │"
+        "  │ Type 'help' or '?' for commands.      │"
         f"{Style.RESET_ALL}"
     )
 
@@ -239,7 +239,7 @@ def start(args: list):
             )
             return True
 
-        if command == "help":
+        if command in ["help","?"]:
             show_help()
             continue
 
