@@ -7,6 +7,7 @@ import importlib.util
 from colorama import init as colorama_init, Fore, Style
 
 TOOL_DIR = os.path.dirname(os.path.abspath(__file__))
+TOOL_NAME = "mpv++"
 
 def _load_module(filename, module_name):
     """Helper to dynamically load the tool's core logic."""
@@ -45,9 +46,12 @@ def start(args: list):
     while True:
         try:
             raw = input(
-                f"{Fore.CYAN}{Style.BRIGHT}mpv++{Style.RESET_ALL}"
-                f"{Fore.CYAN}> {Style.RESET_ALL}"
+                f"{Fore.GREEN}"
+                f"{TOOL_NAME}"
+                f"{Style.RESET_ALL}"
+                f"{Fore.CYAN} ❯ {Style.RESET_ALL}"
             ).strip()
+
         except (EOFError, KeyboardInterrupt):
             print(f"\n{Fore.CYAN}  Returning to N-Toolkit...{Style.RESET_ALL}\n")
             return True
