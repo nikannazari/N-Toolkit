@@ -6,6 +6,7 @@ import importlib.util
 import os
 
 from colorama import Fore, Style
+import pyfiglet
 
 
 TOOL_NAME = "calculator++"
@@ -153,6 +154,11 @@ def start(args: list):
     """
 
     calculator = load_calculator()
+    
+    art = pyfiglet.figlet_format(f"{TOOL_NAME}", font="slant")
+    palette = [Fore.RED, Fore.MAGENTA, Fore.BLUE, Fore.CYAN]
+    for i, line in enumerate(art.splitlines()):
+        print(f"{palette[i % len(palette)]}{line}{Style.RESET_ALL}")
 
     print(
         f"{Fore.MAGENTA}{Style.BRIGHT}"
