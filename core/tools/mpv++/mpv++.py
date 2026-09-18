@@ -72,9 +72,29 @@ def banner():
     palette = [Fore.RED, Fore.MAGENTA, Fore.BLUE, Fore.CYAN]
     for i, line in enumerate(art.splitlines()):
         print(f"{palette[i % len(palette)]}{line}{Style.RESET_ALL}")
-    print(f"{Style.DIM}   random play • saved paths • file-specific playback • shuffle{Style.RESET_ALL}")
-    print(f"{Style.DIM}   type 'help' or '?' for commands   |   'exit' to quit{Style.RESET_ALL}")
-    print()
+    print(
+        f"{Fore.MAGENTA}{Style.BRIGHT}"
+        "\n  ╭──────────── mpv++ ─────────────────╮"
+        f"{Style.RESET_ALL}"
+    )
+
+    print(
+        f"{Fore.MAGENTA}"
+        "  │ Type 'help' for commands.          │"
+        f"{Style.RESET_ALL}"
+    )
+
+    print(
+        f"{Fore.MAGENTA}"
+        "  │ Type 'exit' to return to N-Toolkit.│"
+        f"{Style.RESET_ALL}"
+    )
+
+    print(
+        f"{Fore.MAGENTA}"
+        "  ╰────────────────────────────────────╯"
+        f"{Style.RESET_ALL}\n"
+    )
 
 # ── help ─────────────────────────────────────────────────────────────────
 def help_text():
