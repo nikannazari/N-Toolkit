@@ -205,10 +205,10 @@ def start(args: list):
 
         try:
             user_input = input(
-                f"{Fore.GREEN}"
+                f"{Fore.MAGENTA}"
                 f"{TOOL_NAME}"
                 f"{Style.RESET_ALL}"
-                f"{Fore.CYAN} ❯ {Style.RESET_ALL}"
+                f"{Fore.YELLOW} ❯ {Style.RESET_ALL}"
             ).strip()
 
         except KeyboardInterrupt:
