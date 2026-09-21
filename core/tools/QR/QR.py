@@ -4,8 +4,7 @@ qr.py - Core logic of QR tool.
 import os
 import json
 import datetime
-import subprocess
-import sys
+from colorama import Fore, Style
 
 # Dynamic loading helpers
 TOOL_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -24,15 +23,14 @@ def _import_modules():
 
 def _import_decoder():
     try:
-        from pyzbar.pyzbar import decode
         import cv2
         import numpy as np
-        return decode, cv2, np
+        return cv2, np
     except ImportError:
-        return None, None, None
+        return None, None
 
 qrcode, Image = _import_modules()
-decode, cv2, np = _import_decoder()
+cv2, np = _import_decoder()
 
 # ── Persistence ──
 def ensure_config():
@@ -68,9 +66,6 @@ def ok(msg):    print(f"{Fore.GREEN}✔ {msg}{Style.RESET_ALL}")
 def warn(msg):  print(f"{Fore.YELLOW}⚡ {msg}{Style.RESET_ALL}")
 def err(msg):   print(f"{Fore.RED}✘ {msg}{Style.RESET_ALL}")
 
-# Fix missing imports in this scope
-from colorama import Fore, Style
-
 # ── Actions ──
 def generate_qr(text: str, filename: str = "qr_code.png"):
     if not qrcode or not Image:
@@ -91,38 +86,46 @@ def generate_qr(text: str, filename: str = "qr_code.png"):
     ok(f"QR Code generated and saved to: {save_path}")
 
 def decode_image(filepath: str):
-    if not decode:
-        err("Missing dependencies. Run: pip install pyzbar opencv-python")
+    if not cv2:
+        err("Missing dependencies. Run: pip install opencv-python pillow")
         return
     try:
-        img = Image.open(filepath)
-        results = decode(img)
-        if not results:
-            warn(f"No QR code found in {filepath}.")
-            return
+        # Use OpenCV to read the image
+        img = cv2.imread(filepath)
+        if img is None:
+            # Fallback to PIL if cv2 fails to read special formats
+            pil_img = Image.open(filepath)
+            img = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
             
-        for res in results:
-            text = res.data.decode('utf-8')
+        detector = cv2.QRCodeDetector()
+        text, points, _ = detector.detectAndDecode(img)
+        
+        if text:
             ok(f"Decoded: {text}")
             add_to_history(text, f"File: {filepath}")
+        else:
+            warn(f"No QR code found in {filepath}.")
     except Exception as e:
         err(f"Failed to read image: {e}")
 
 def batch_decode(directory: str):
-    if not decode:
+    if not cv2:
         err("Missing dependencies.")
         return
         
     valid_exts = ['.png', '.jpg', '.jpeg', '.bmp', '.gif']
     found_any = False
+    detector = cv2.QRCodeDetector()
     
     for filename in os.listdir(directory):
         if any(filename.lower().endswith(ext) for ext in valid_exts):
             filepath = os.path.join(directory, filename)
-            img = Image.open(filepath)
-            results = decode(img)
-            for res in results:
-                text = res.data.decode('utf-8')
+            img = cv2.imread(filepath)
+            if img is None:
+                continue
+                
+            text, _, _ = detector.detectAndDecode(img)
+            if text:
                 ok(f"[{filename}] -> {text}")
                 add_to_history(text, f"Batch: {filepath}")
                 found_any = True
@@ -131,8 +134,8 @@ def batch_decode(directory: str):
         warn("No QR codes found in the specified directory.")
 
 def decode_webcam():
-    if not cv2 or not decode:
-        err("Missing dependencies. Run: pip install opencv-python pyzbar")
+    if not cv2:
+        err("Missing dependencies. Run: pip install opencv-python")
         return
 
     info("Starting webcam. Press 'q' in the webcam window to quit.")
@@ -141,6 +144,7 @@ def decode_webcam():
         err("Cannot access webcam.")
         return
 
+    detector = cv2.QRCodeDetector()
     found = False
     try:
         while True:
@@ -149,21 +153,15 @@ def decode_webcam():
                 err("Failed to grab frame.")
                 break
                 
-            # Convert to grayscale for pyzbar
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            results = decode(gray)
+            text, points, _ = detector.detectAndDecode(frame)
             
-            for res in results:
-                text = res.data.decode('utf-8')
-                points = res.polygon
-                
-                # Draw bounding box
-                if len(points) > 0:
-                    pts = [(p.x, p.y) for p in points]
-                    cv2.polylines(frame, [np.array(pts, np.int32)], True, (0, 255, 0), 3)
+            if text:
+                if points is not None:
+                    pts = np.array(points, np.int32)
+                    cv2.polylines(frame, [pts], True, (0, 255, 0), 3)
                     
-                cv2.putText(frame, text, (points[0].x, points[0].y - 10), 
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+                cv2.putText(frame, text, (10, 50), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
                             
                 ok(f"Decoded from webcam: {text}")
                 add_to_history(text, "Webcam")
@@ -182,8 +180,8 @@ def decode_webcam():
             warn("No QR code detected before closing.")
 
 def decode_screen():
-    if not cv2 or not decode:
-        err("Missing dependencies. Run: pip install opencv-python pyzbar mss")
+    if not cv2:
+        err("Missing dependencies. Run: pip install opencv-python mss")
         return
         
     try:
@@ -197,20 +195,17 @@ def decode_screen():
         monitor = sct.monitors[1]
         screenshot = sct.grab(monitor)
         
-        # Convert to numpy array for cv2
         img = np.array(screenshot)
-        # mss returns BGRA, convert to BGR for cv2/pyzbar
         img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
         
-        results = decode(img)
-        if not results:
-            warn("No QR code found on screen.")
-            return
-            
-        for res in results:
-            text = res.data.decode('utf-8')
+        detector = cv2.QRCodeDetector()
+        text, _, _ = detector.detectAndDecode(img)
+        
+        if text:
             ok(f"Decoded from screen: {text}")
             add_to_history(text, "Screen Capture")
+        else:
+            warn("No QR code found on screen.")
 
 def show_history():
     history = load_history()
