@@ -5,3 +5,9 @@ streamlit==1.64.0
 colorama==0.4.6
 psutil==7.2.2
 pyfiglet==1.0.4
+
+#=======QR tool=======
+qrcode==8.2 
+pyzbar==0.1.9
+opencv-python==5.0.0.93
+pillow==12.3.0
