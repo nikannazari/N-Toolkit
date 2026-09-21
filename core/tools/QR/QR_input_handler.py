@@ -17,8 +17,8 @@ def _load_module(filename, module_name):
     return mod
 
 # Load the core qr logic
-qr = _load_module("qr.py", "qr_core")
-validators = _load_module("qr_validators.py", "qr_validators")
+qr = _load_module("QR.py", "qr_core")
+validators = _load_module("QR_validators.py", "qr_validators")
 
 def show_help():
     print(f"\n{Fore.CYAN}{Style.BRIGHT}  QR Tool Help{Style.RESET_ALL}")
