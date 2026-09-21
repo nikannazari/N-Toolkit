@@ -11,3 +11,4 @@ qrcode==8.2
 pyzbar==0.1.9
 opencv-python==5.0.0.93
 pillow==12.3.0
+mss==10.2.0
