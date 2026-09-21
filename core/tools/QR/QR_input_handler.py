@@ -49,10 +49,10 @@ def start(args: list):
     for i, line in enumerate(art.splitlines()):
         print(f"{palette[i % len(palette)]}{line}{Style.RESET_ALL}")
 
-    print(f"{Fore.MAGENTA}{Style.BRIGHT}\n  ╭──────────── QR Tool ─────────────╮{Style.RESET_ALL}")
+    print(f"{Fore.MAGENTA}{Style.BRIGHT}\n  ╭──────────── QR Tool ───────────────╮{Style.RESET_ALL}")
     print(f"{Fore.MAGENTA}  │ Type 'help' for commands.         │{Style.RESET_ALL}")
     print(f"{Fore.MAGENTA}  │ Type 'exit' to return to N-Toolkit│{Style.RESET_ALL}")
-    print(f"{Fore.MAGENTA}  ╰───────────────────────────────────╯{Style.RESET_ALL}\n")
+    print(f"{Fore.MAGENTA}  ╰────────────────────────────────────╯{Style.RESET_ALL}\n")
 
     # Handle args passed directly from N-Toolkit
     if args:
