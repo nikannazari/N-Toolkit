@@ -96,12 +96,18 @@ def start(args: list):
 def execute_command(command: str, args: list):
     if command == "gen":
         if not args:
-            qr.err("Usage: gen <text or url> [filename]")
+            qr.err("Usage: gen <text or url> [filename.png]")
             return
-        text = " ".join(args[:-1]) if len(args) > 1 and not args[-1].endswith(".png") else args[0]
-        filename = args[-1] if len(args) > 1 and args[-1].endswith(".png") else "qr_code.png"
-        
-        ok_, text = validators.validate_text(" ".join(args) if len(args)==1 else text)
+            
+        # Check if the last argument is a filename (ends with .png/.jpg/.jpeg)
+        if len(args) > 1 and args[-1].lower().endswith(('.png', '.jpg', '.jpeg')):
+            filename = args[-1]
+            text = " ".join(args[:-1])  # Join everything else as the sentence
+        else:
+            filename = "qr_code.png"
+            text = " ".join(args)  # Join all arguments as the sentence
+            
+        ok_, text = validators.validate_text(text)
         if ok_:
             qr.generate_qr(text, filename)
 
