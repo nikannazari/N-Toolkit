@@ -72,7 +72,7 @@ def generate_qr(text: str, filename: str = "qr_code.png"):
         err("Missing dependencies. Run: pip install qrcode[pil]")
         return
         
-    save_path = os.path.join(os.getcwd(), filename)
+    save_path = os.path.join(os.getcwd(),"saved_data/QR", filename)
     qr = qrcode.QRCode(
         version=1,
         error_correction=qrcode.constants.ERROR_CORRECT_L,
