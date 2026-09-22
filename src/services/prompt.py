@@ -13,6 +13,7 @@ from src.services.input_handler import handle_input
 init(autoreset=True)
 
 PROMPT_TEXT = f"{Fore.GREEN}{FRAMEWORK_NAME}{Style.RESET_ALL}{Fore.CYAN} ❯{Style.RESET_ALL} "
+HELP_COMMANDS=["help","?"]
 
 def show_options() -> None:
     """Displays the available commands in a formatted layout."""
@@ -59,7 +60,7 @@ def start_prompt() -> None:
                 print(f"\n{Fore.YELLOW}  [!] Shutting down framework safely...{Style.RESET_ALL}")
                 sys.exit(0)
                 
-            elif main_cmd == "help":
+            elif main_cmd in HELP_COMMANDS:
                 show_options()
                 
             elif main_cmd == "tools":
