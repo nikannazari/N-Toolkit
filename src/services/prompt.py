@@ -9,11 +9,12 @@ from colorama import Fore, Style, init
 # Import from our new modules
 from constants.commands import BUILTIN_COMMANDS, AVAILABLE_TOOLS, FRAMEWORK_NAME
 from src.services.input_handler import handle_input
+from src.services.custom_input import CustomInput # Import our custom input
 
 init(autoreset=True)
 
 PROMPT_TEXT = f"{Fore.GREEN}{FRAMEWORK_NAME}{Style.RESET_ALL}{Fore.CYAN} ❯{Style.RESET_ALL} "
-HELP_COMMANDS=["help","?"]
+cli_input = CustomInput() # Initialize the custom input engine
 
 def show_options() -> None:
     """Displays the available commands in a formatted layout."""
@@ -40,16 +41,14 @@ def show_tools_list() -> None:
 
 def start_prompt() -> None:
     """The main loop that waits for user input and dispatches commands."""
-    history = []
-    
     while True:
         try:
-            user_input = input(PROMPT_TEXT).strip()
+            # Use our custom input instead of standard input()
+            user_input = cli_input.get_input(PROMPT_TEXT).strip()
             
             if not user_input:
                 continue
                 
-            history.append(user_input)
             parts = user_input.lower().split()
             main_cmd = parts[0]
             
@@ -60,7 +59,7 @@ def start_prompt() -> None:
                 print(f"\n{Fore.YELLOW}  [!] Shutting down framework safely...{Style.RESET_ALL}")
                 sys.exit(0)
                 
-            elif main_cmd in HELP_COMMANDS:
+            elif main_cmd == "help":
                 show_options()
                 
             elif main_cmd == "tools":
@@ -71,7 +70,7 @@ def start_prompt() -> None:
                 
             elif main_cmd == "history":
                 print(f"\n{Fore.CYAN}  Command History:{Style.RESET_ALL}")
-                for idx, cmd in enumerate(history, 1):
+                for idx, cmd in enumerate(cli_input.history, 1):
                     print(f"  {Fore.LIGHTBLACK_EX}{idx}.{Style.RESET_ALL} {cmd}")
                 print()
                 
