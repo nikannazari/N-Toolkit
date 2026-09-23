@@ -59,7 +59,7 @@ def start_prompt() -> None:
                 print(f"\n{Fore.YELLOW}  [!] Shutting down framework safely...{Style.RESET_ALL}")
                 sys.exit(0)
                 
-            elif main_cmd == "help":
+            elif main_cmd == ["help","?"]:
                 show_options()
                 
             elif main_cmd == "tools":
