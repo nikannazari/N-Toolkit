@@ -34,7 +34,8 @@ TAGLINE = "The Ultimate Linux Utility Framework"  # Updated tagline
 AVAILABLE_TOOLS: List[str] = [
     "calculator++",
     "mpv++",
-    "QR"
+    "QR",
+    "archiver"
     # "ffmpeg",
     # "autogit",
     # "sysinfo",
