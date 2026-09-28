@@ -6,6 +6,10 @@ import sys
 import importlib.util
 from colorama import init as colorama_init, Fore, Style
 
+# Add project root to sys.path so we can import CustomInput
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..")))
+from src.services.custom_input import CustomInput
+
 TOOL_DIR = os.path.dirname(os.path.abspath(__file__))
 TOOL_NAME = "mpv++"
 
@@ -42,10 +46,12 @@ def start(args: list):
             if exit_signal:
                 return True
     
+    mpv_input = CustomInput()  # Initialize custom input
+
     # mpv++ own prompt loop
     while True:
         try:
-            raw = input(
+            raw = mpv_input.get_input(
                 f"{Fore.MAGENTA}"
                 f"{TOOL_NAME}"
                 f"{Style.RESET_ALL}"
