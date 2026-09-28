@@ -1,10 +1,15 @@
 """
-qr_input_handler.py - N-Toolkit entry point for QR.
+QR_input_handler.py - N-Toolkit entry point for QR.
 """
 import os
+import sys
 import importlib.util
 from colorama import init as colorama_init, Fore, Style
 import pyfiglet
+
+# Add project root to sys.path so we can import CustomInput
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..")))
+from src.services.custom_input import CustomInput
 
 TOOL_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -62,10 +67,12 @@ def start(args: list):
         else:
             execute_command(command, args[1:])
 
+    qr_input = CustomInput()  # Initialize custom input
+
     # QR own prompt loop
     while True:
         try:
-            user_input = input(
+            user_input = qr_input.get_input(
                 f"{Fore.MAGENTA}QR{Style.RESET_ALL}{Fore.YELLOW} ❯ {Style.RESET_ALL}"
             ).strip()
         except (EOFError, KeyboardInterrupt):
