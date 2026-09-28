@@ -2,9 +2,14 @@
 archiver_input_handler.py - N-Toolkit entry point for Archiver.
 """
 import os
+import sys
 import importlib.util
 from colorama import init as colorama_init, Fore, Style
 import pyfiglet
+
+# Add project root to sys.path so we can import CustomInput
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..")))
+from src.services.custom_input import CustomInput
 
 TOOL_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -90,9 +95,11 @@ def start(args: list):
         else:
             execute_command(command, args[1:])
 
+    arch_input = CustomInput()  # Initialize custom input
+
     while True:
         try:
-            user_input = input(
+            user_input = arch_input.get_input(
                 f"{Fore.MAGENTA}archiver{Style.RESET_ALL}{Fore.YELLOW} ❯ {Style.RESET_ALL}"
             ).strip()
         except (EOFError, KeyboardInterrupt):
@@ -117,5 +124,5 @@ def start(args: list):
         if command == "clear":
             os.system("clear" if os.name == "posix" else "cls")
             continue
-
+        
         execute_command(command, command_args)
