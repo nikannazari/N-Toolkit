@@ -4,6 +4,10 @@ calculator++_input_handler.py - CLI interface for Calculator++.
 
 import importlib.util
 import os
+import sys
+# Add this right below your existing imports
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..")))
+from src.services.custom_input import CustomInput
 
 from colorama import Fore, Style
 import pyfiglet
@@ -905,6 +909,7 @@ def execute_command(calculator, command, args):
 def start(args: list):
     """Entry point called by N-Toolkit."""
     calculator = load_calculator()
+    calc_input = CustomInput()  # Initialize custom input with its own history
 
     art = pyfiglet.figlet_format(f"{TOOL_NAME}", font="slant")
     palette = [Fore.RED, Fore.MAGENTA, Fore.BLUE, Fore.CYAN]
@@ -927,7 +932,8 @@ def start(args: list):
     # Calculator++ own prompt loop
     while True:
         try:
-            user_input = input(
+            # Replaced standard input() with calc_input.get_input()
+            user_input = calc_input.get_input(
                 f"{Fore.MAGENTA}{TOOL_NAME}{Style.RESET_ALL}{Fore.YELLOW} ❯ {Style.RESET_ALL}"
             ).strip()
         except KeyboardInterrupt:
