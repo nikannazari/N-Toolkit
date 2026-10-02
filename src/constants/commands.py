@@ -22,7 +22,8 @@ AVAILABLE_TOOLS = [
     "calculator++",
     "mpv++",
     "QR",
-    "archiver"
+    "archiver",
+    "status"
     # "ffmpeg",
     # "autogit",
     # "sysinfo",
