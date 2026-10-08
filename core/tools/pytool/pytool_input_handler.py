@@ -26,24 +26,57 @@ def show_help():
     print(f"\n{Fore.CYAN}{Style.BRIGHT}  PyTool Help{Style.RESET_ALL}")
     print(f"  {Fore.YELLOW}{'─' * 50}{Style.RESET_ALL}")
     
-    print(f"  {Fore.MAGENTA}Commands:{Style.RESET_ALL}")
-    print(f"  {Fore.YELLOW}venv [name]{Style.RESET_ALL}                Create virtual environment (default: .venv)")
-    print(f"  {Fore.YELLOW}install [pkg]{Style.RESET_ALL}              Install from requirements.txt or a specific package")
-    print(f"  {Fore.YELLOW}freeze{Style.RESET_ALL}                     Save current dependencies to requirements.txt")
-    print(f"  {Fore.YELLOW}lint [files...]{Style.RESET_ALL}            Lint code with flake8 (default: current dir)")
-    print(f"  {Fore.YELLOW}format [files...]{Style.RESET_ALL}          Format code with black (default: current dir)")
-    print(f"  {Fore.YELLOW}run <script.py>{Style.RESET_ALL}            Run a Python script")
-    print(f"  {Fore.YELLOW}package{Style.RESET_ALL}                    Build sdist and wheel using python-build")
-    print(f"  {Fore.YELLOW}publish{Style.RESET_ALL}                    Upload package to PyPI using twine")
+    print(f"  {Fore.MAGENTA}Project Management:{Style.RESET_ALL}")
+    print(f"  {Fore.YELLOW}add <name> [path]{Style.RESET_ALL}             Save current (or specified) dir as a project")
+    print(f"  {Fore.YELLOW}remove <name>{Style.RESET_ALL}                 Remove a saved project")
+    print(f"  {Fore.YELLOW}saved{Style.RESET_ALL}                         List all saved projects")
+    print(f"  {Fore.YELLOW}use <name>{Style.RESET_ALL}                    Switch to a saved project directory")
+    print(f"  {Fore.YELLOW}pwd{Style.RESET_ALL}                           Show active project path")
+    
+    print(f"\n  {Fore.MAGENTA}Python Development:{Style.RESET_ALL}")
+    print(f"  {Fore.YELLOW}venv [name]{Style.RESET_ALL}                  Create virtual environment (default: .venv)")
+    print(f"  {Fore.YELLOW}install [pkg]{Style.RESET_ALL}                Install from requirements.txt or a package")
+    print(f"  {Fore.YELLOW}freeze{Style.RESET_ALL}                       Save dependencies to requirements.txt")
+    print(f"  {Fore.YELLOW}lint [files...]{Style.RESET_ALL}              Lint code with flake8")
+    print(f"  {Fore.YELLOW}format [files...]{Style.RESET_ALL}            Format code with black")
+    print(f"  {Fore.YELLOW}run <script.py>{Style.RESET_ALL}              Run a Python script")
+    print(f"  {Fore.YELLOW}package{Style.RESET_ALL}                      Build sdist and wheel")
+    print(f"  {Fore.YELLOW}publish{Style.RESET_ALL}                      Upload package to PyPI using twine")
     
     print(f"\n  {Fore.MAGENTA}System:{Style.RESET_ALL}")
-    print(f"  {Fore.YELLOW}help{Style.RESET_ALL}                       Show this help")
-    print(f"  {Fore.YELLOW}clear{Style.RESET_ALL}                      Clear screen")
-    print(f"  {Fore.YELLOW}exit{Style.RESET_ALL}                       Return to N-Toolkit")
+    print(f"  {Fore.YELLOW}help{Style.RESET_ALL}                         Show this help")
+    print(f"  {Fore.YELLOW}clear{Style.RESET_ALL}                        Clear screen")
+    print(f"  {Fore.YELLOW}exit{Style.RESET_ALL}                         Return to N-Toolkit")
     print(f"  {Fore.YELLOW}{'─' * 50}{Style.RESET_ALL}\n")
 
 def execute_command(command: str, args: list):
-    if command == "venv":
+    if command == "add":
+        if not args:
+            pytool.err("Usage: add <name> [path]")
+            return
+        name = args[0]
+        path = args[1] if len(args) > 1 else None
+        pytool.add_project(name, path)
+
+    elif command == "remove":
+        if not args:
+            pytool.err("Usage: remove <name>")
+            return
+        pytool.remove_project(args[0])
+
+    elif command == "saved":
+        pytool.list_projects()
+
+    elif command == "use":
+        if not args:
+            pytool.err("Usage: use <name>")
+            return
+        pytool.use_project(args[0])
+
+    elif command == "pwd":
+        pytool.pwd()
+
+    elif command == "venv":
         venv_name = args[0] if args else ".venv"
         pytool.create_venv(venv_name)
 
@@ -77,6 +110,8 @@ def execute_command(command: str, args: list):
 
 def start(args: list):
     """Entry point called by N-Toolkit."""
+    pytool.ensure_config()
+    
     art = pyfiglet.figlet_format("PyTool", font="slant")
     palette = [Fore.RED, Fore.MAGENTA, Fore.BLUE, Fore.CYAN]
     for i, line in enumerate(art.splitlines()):
@@ -98,9 +133,14 @@ def start(args: list):
 
     while True:
         try:
-            user_input = pytool_input.get_input(
-                f"{Fore.MAGENTA}pytool{Style.RESET_ALL}{Fore.YELLOW} ❯ {Style.RESET_ALL}"
-            ).strip()
+            # Dynamic prompt: Shows active project name if one is selected
+            active_name = pytool.get_active_name()
+            if active_name:
+                prompt = f"{Fore.MAGENTA}pytool{Fore.BLUE}({active_name}){Style.RESET_ALL}{Fore.YELLOW} ❯ {Style.RESET_ALL}"
+            else:
+                prompt = f"{Fore.MAGENTA}pytool{Style.RESET_ALL}{Fore.YELLOW} ❯ {Style.RESET_ALL}"
+                
+            user_input = pytool_input.get_input(prompt).strip()
         except (EOFError, KeyboardInterrupt):
             print(f"\n{Fore.CYAN}  Returning to N-Toolkit...{Style.RESET_ALL}\n")
             return True
