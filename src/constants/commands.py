@@ -23,7 +23,8 @@ AVAILABLE_TOOLS = [
     "mpv++",
     "QR",
     "archiver",
-    "status"
+    "status",
+    "pytool"
     # "ffmpeg",
     # "autogit",
     # "sysinfo",
