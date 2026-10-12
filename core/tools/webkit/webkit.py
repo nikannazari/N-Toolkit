@@ -5,7 +5,6 @@ import os
 import ssl
 import socket
 import datetime
-import subprocess
 from urllib.parse import urljoin, urlparse
 from colorama import Fore, Style
 
@@ -16,10 +15,22 @@ except ImportError:
     print(f"{Fore.RED}Missing dependencies. Run: pip install requests beautifulsoup4{Style.RESET_ALL}")
     exit(1)
 
+# ── Path Configuration ──
+TOOL_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(TOOL_DIR, "..", "..", ".."))
+SAVE_BASE_DIR = os.path.join(PROJECT_ROOT, "saved_data", "WebKit")
+
 def info(msg):  print(f"{Fore.CYAN}{msg}{Style.RESET_ALL}")
 def ok(msg):    print(f"{Fore.GREEN}✔ {msg}{Style.RESET_ALL}")
 def warn(msg):  print(f"{Fore.YELLOW}⚡ {msg}{Style.RESET_ALL}")
 def err(msg):   print(f"{Fore.RED}✘ {msg}{Style.RESET_ALL}")
+
+def _get_save_dir(url: str) -> str:
+    """Creates and returns the save directory for a specific domain."""
+    domain = urlparse(url).netloc
+    save_dir = os.path.join(SAVE_BASE_DIR, domain)
+    os.makedirs(save_dir, exist_ok=True)
+    return save_dir
 
 def _fetch(url: str):
     try:
@@ -43,11 +54,13 @@ def download_website(url: str):
     info(f"Downloading HTML from {url}...")
     res = _fetch(url)
     if res:
-        parsed = urlparse(url)
-        filename = f"{parsed.netloc}.html"
-        with open(filename, "w", encoding="utf-8") as f:
+        save_dir = _get_save_dir(url)
+        domain = urlparse(url).netloc
+        filepath = os.path.join(save_dir, f"{domain}.html")
+        
+        with open(filepath, "w", encoding="utf-8") as f:
             f.write(res.text)
-        ok(f"Website HTML saved to {filename}")
+        ok(f"Website HTML saved to {filepath}")
 
 def extract_links(url: str):
     info(f"Extracting links from {url}...")
@@ -75,9 +88,9 @@ def download_images(url: str):
             warn("No images found.")
             return
             
-        parsed = urlparse(url)
-        save_dir = f"{parsed.netloc}_images"
-        os.makedirs(save_dir, exist_ok=True)
+        save_dir = _get_save_dir(url)
+        img_dir = os.path.join(save_dir, "images")
+        os.makedirs(img_dir, exist_ok=True)
         
         count = 0
         for img in img_tags:
@@ -87,12 +100,12 @@ def download_images(url: str):
                 img_name = os.path.basename(urlparse(img_url).path)
                 if not img_name:
                     img_name = f"image_{count}.jpg"
-                with open(os.path.join(save_dir, img_name), "wb") as f:
+                with open(os.path.join(img_dir, img_name), "wb") as f:
                     f.write(img_data)
                 count += 1
             except Exception:
                 continue
-        ok(f"Downloaded {count} images to ./{save_dir}/")
+        ok(f"Downloaded {count} images to {img_dir}")
 
 def website_screenshot(url: str):
     info(f"Taking screenshot of {url}...")
@@ -113,11 +126,14 @@ def website_screenshot(url: str):
         
         driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
         driver.get(url)
-        parsed = urlparse(url)
-        filename = f"{parsed.netloc}_screenshot.png"
-        driver.save_screenshot(filename)
+        
+        save_dir = _get_save_dir(url)
+        domain = urlparse(url).netloc
+        filepath = os.path.join(save_dir, f"{domain}_screenshot.png")
+        
+        driver.save_screenshot(filepath)
         driver.quit()
-        ok(f"Screenshot saved to {filename}")
+        ok(f"Screenshot saved to {filepath}")
     except Exception as e:
         err(f"Failed to take screenshot: {e}")
 
