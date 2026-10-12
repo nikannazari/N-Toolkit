@@ -25,7 +25,7 @@ AVAILABLE_TOOLS = [
     "archiver",
     "status",
     "pytool",
-    "WebKit"
+    "webkit"
     # "ffmpeg",
     # "autogit",
     # "sysinfo",
