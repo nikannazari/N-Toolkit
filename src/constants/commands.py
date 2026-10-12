@@ -24,7 +24,8 @@ AVAILABLE_TOOLS = [
     "QR",
     "archiver",
     "status",
-    "pytool"
+    "pytool",
+    "WebKit"
     # "ffmpeg",
     # "autogit",
     # "sysinfo",
