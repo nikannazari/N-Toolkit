@@ -37,7 +37,8 @@ AVAILABLE_TOOLS: List[str] = [
     "QR",
     "archiver",
     "status",
-    "pytool"
+    "pytool",
+    "webkit"
     # "ffmpeg",
     # "autogit",
     # "sysinfo",
