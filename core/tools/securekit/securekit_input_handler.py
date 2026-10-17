@@ -51,9 +51,19 @@ def execute_command(command: str , args: list):
     if command == "hash":
         if not args:
             securekit.err("Usage: hash <algorithm> <input text>")
+            securekit.info("Available algorithms are : mda5 , sha1 , sha256 , sha224 , sha384 , sha512")
             return
+        if len(args) < 2:
+            securekit.err("Usage: hash <algorithm> <input text>")
+            return
+        
         algorithm = args[0]
         input_text = args[1]
+    
+        if algorithm not in ["md5","sha1","sha224","sha256","sha512","sha384"]:
+            securekit.info("Available algorithms are : mda5 , sha1 , sha256 , sha224 , sha384 , sha512")
+            return
+
         securekit.hash(input_text,algorithm)
         
 def start(args: list):
