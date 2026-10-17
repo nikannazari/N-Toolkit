@@ -20,10 +20,15 @@ def _to_bytes(s):
 def hash(input_text, algorithms):
 
     if algorithms == "md5":
-        print(hashlib.md5(_to_bytes(input_text)).hexdigest())
+        ok(f"{input_text} hashed by {algorithms} : {hashlib.md5(_to_bytes(input_text)).hexdigest()}")
     elif algorithms == "sha1":
-        print(hashlib.sha1(_to_bytes(input_text)).hexdigest())
+        ok(f"{input_text} hashed by {algorithms} : {hashlib.sha1(_to_bytes(input_text)).hexdigest()}")
     elif algorithms == "sha256":
-        print(hashlib.sha256(_to_bytes(input_text)).hexdigest())
-    else: 
-        print(hashlib.sha512(_to_bytes(input_text)).hexdigest())
+        ok(f"{input_text} hashed by {algorithms} : {hashlib.sha256(_to_bytes(input_text)).hexdigest()}")
+    elif algorithms == "sha224":
+        ok(f"{input_text} hashed by {algorithms} : {hashlib.sha224(_to_bytes(input_text)).hexdigest()}")
+    elif algorithms == "sha384":
+        ok(f"{input_text} hashed by {algorithms} : {hashlib.sha384(_to_bytes(input_text)).hexdigest()}")
+    elif algorithms == "sha512":
+        ok(f"{input_text} hashed by {algorithms} : {hashlib.sha512(_to_bytes(input_text)).hexdigest()}")
+
