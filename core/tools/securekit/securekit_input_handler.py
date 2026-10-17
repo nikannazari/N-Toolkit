@@ -4,6 +4,7 @@ securekit_input_handler.py - N-toolkit entry point for Secure ToolKit
 import os
 import sys
 import importlib.util
+import pyfiglet
 from colorama import init as colorama_init , Fore , Style
 
 # Add project root to sys.path so we can import CustomInput
@@ -46,3 +47,66 @@ def show_help():
 
     print(f"  {Fore.YELLOW}{'─' * 50}{Style.RESET_ALL}\n")
     
+def execute_command(command: str , args: list):
+    if command == "hash":
+        if not args:
+            securekit.err("Usage: hash <algorithm> <input text>")
+            return
+        algorithm = args[0]
+        input_text = args[1]
+        securekit.hash(input_text,algorithm)
+        
+def start(args: list):
+    """Entry point called by N-Toolkit."""
+    
+    art = pyfiglet.figlet_format("SecureKit", font="slant")
+    palette = [Fore.RED, Fore.MAGENTA, Fore.BLUE, Fore.CYAN]
+    for i, line in enumerate(art.splitlines()):
+        print(f"{palette[i % len(palette)]}{line}{Style.RESET_ALL}")
+
+    print(f"{Fore.MAGENTA}{Style.BRIGHT}\n  ╭──────────── SecureKit ──────────────╮{Style.RESET_ALL}")
+    print(f"{Fore.MAGENTA}  │ Type 'help' for commands.        │{Style.RESET_ALL}")
+    print(f"{Fore.MAGENTA}  │ Type 'exit' to return to N-Toolkit│{Style.RESET_ALL}")
+    print(f"{Fore.MAGENTA}  ╰──────────────────────────────────╯{Style.RESET_ALL}\n")
+
+    if args:
+        command = args[0].lower()
+        if command in ("help", "?"):
+            show_help()
+        else:
+            execute_command(command, args[1:])
+
+    securekit_input = CustomInput()
+
+    while True:
+        try:
+            prompt = f"{Fore.MAGENTA}SecureKit{Style.RESET_ALL}{Fore.YELLOW} ❯ {Style.RESET_ALL}"
+                
+            user_input = securekit_input.get_input(prompt).strip()
+        except (EOFError, KeyboardInterrupt):
+            print(f"\n{Fore.CYAN}  Returning to N-Toolkit...{Style.RESET_ALL}\n")
+            return True
+
+        if not user_input:
+            continue
+
+        parts = user_input.split()
+        command = parts[0].lower()
+        command_args = parts[1:]
+
+        if command in ("exit", "quit", "q"):
+            print(f"\n{Fore.CYAN}  Returning to N-Toolkit...{Style.RESET_ALL}\n")
+            return True
+
+        if command in ("help", "?"):
+            show_help()
+            continue
+
+        if command == "clear":
+            os.system("clear" if os.name == "posix" else "cls")
+            continue
+        
+        if command not in ["hash", "password"]:
+            securekit.err(f"command {command} not found")
+
+        execute_command(command, command_args)
