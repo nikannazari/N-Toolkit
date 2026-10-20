@@ -53,7 +53,7 @@ def execute_command(command: str , args: list):
             securekit.err("Usage: hash <algorithm> <input text>")
             securekit.info("Available algorithms are : mda5 , sha1 , sha256 , sha224 , sha384 , sha512")
             return
-        if len(args) < 2:
+        if len(args) != 2:
             securekit.err("Usage: hash <algorithm> <input text>")
             return
         
@@ -65,6 +65,45 @@ def execute_command(command: str , args: list):
             return
 
         securekit.hash(input_text,algorithm)
+        
+    if command == "password":
+        if not args:
+            securekit.err("Usage : password <type> <features>")
+            securekit.info("    password pin <lenght>")
+            securekit.info("    password random <lenght> <include numbers> <include symbols>")
+            securekit.warn("        password random 12 yes no")
+            securekit.info("    password memorable <easy> <number of words> <seprator> <capitalization>")
+            securekit.warn("        password memorable no 4 _ yes")
+            return
+        elif len(args) < 2:
+            securekit.err("Usage : password <type> <features>")
+            securekit.info("    password pin <lenght>")
+            securekit.info("    password random <lenght> <include numbers> <include symbols>")
+            securekit.warn("        password random 12 yes no")
+            securekit.info("    password memorable <easy> <number of words> <seprator> <capitalization>")
+            securekit.warn("        password memorable no 4 _ yes")
+            return     
+        
+        password_type = args[0]
+        if password_type == "pin":
+            password_lenght = int(args[1])
+            generator = securekit.PinGenerator(password_lenght)
+            generator.generate()
+
+        elif password_type == "random":
+            password_lenght = int(args[1])
+            include_numbers = (args[2] if args[2] else "no")
+            include_symbols = (args[3]if args[3] else "no")
+            generator = securekit.RandomPasswordGenerator(password_lenght,include_numbers,include_symbols)
+            generator.generate()
+            
+        elif password_type == "memorable":
+            easy = args[1]
+            number_of_words = int(args[2])
+            seprator = args[3]
+            capitalization = args[4]
+            generator = securekit.MemorablePassword(easy,number_of_words,seprator,capitalization)
+            generator.generate()
         
 def start(args: list):
     """Entry point called by N-Toolkit."""
