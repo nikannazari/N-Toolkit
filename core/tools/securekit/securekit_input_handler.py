@@ -5,6 +5,7 @@ import os
 import sys
 import importlib.util
 import pyfiglet
+import shlex
 from colorama import init as colorama_init , Fore , Style
 
 # Add project root to sys.path so we can import CustomInput
@@ -54,8 +55,6 @@ def execute_command(command: str , args: list):
             securekit.info("Available algorithms are : mda5 , sha1 , sha256 , sha224 , sha384 , sha512")
             return
         
-        print(len(args))
-        print(args)
         if len(args) != 3:
             securekit.err("Usage: hash <algorithm> <type> <input text or file>")
             securekit.warn("hash sha1 file ../../../file.txt")
@@ -145,7 +144,7 @@ def start(args: list):
         if not user_input:
             continue
 
-        parts = user_input.split()
+        parts = shlex.split(user_input)
         command = parts[0].lower()
         command_args = parts[1:]
 
