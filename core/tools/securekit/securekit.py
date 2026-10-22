@@ -22,20 +22,59 @@ def err(msg):   print(f"{Fore.RED}✘ {msg}{Style.RESET_ALL}")
 def _to_bytes(s):
         return s.encode('utf-8') if isinstance(s, str) else s
 
-def hash(input_text, algorithms):
+import hashlib
+import subprocess
 
-    if algorithms == "md5":
-        ok(f"{input_text} hashed by {algorithms} : {hashlib.md5(_to_bytes(input_text)).hexdigest()}")
-    elif algorithms == "sha1":
-        ok(f"{input_text} hashed by {algorithms} : {hashlib.sha1(_to_bytes(input_text)).hexdigest()}")
-    elif algorithms == "sha256":
-        ok(f"{input_text} hashed by {algorithms} : {hashlib.sha256(_to_bytes(input_text)).hexdigest()}")
-    elif algorithms == "sha224":
-        ok(f"{input_text} hashed by {algorithms} : {hashlib.sha224(_to_bytes(input_text)).hexdigest()}")
-    elif algorithms == "sha384":
-        ok(f"{input_text} hashed by {algorithms} : {hashlib.sha384(_to_bytes(input_text)).hexdigest()}")
-    elif algorithms == "sha512":
-        ok(f"{input_text} hashed by {algorithms} : {hashlib.sha512(_to_bytes(input_text)).hexdigest()}")
+
+def hash(hash_type, input_text, algorithms):
+    algorithms = algorithms.lower()
+
+    text_algorithms = {
+        "md5": hashlib.md5,
+        "sha1": hashlib.sha1,
+        "sha224": hashlib.sha224,
+        "sha256": hashlib.sha256,
+        "sha384": hashlib.sha384,
+        "sha512": hashlib.sha512,
+    }
+
+    if hash_type == "text":
+        if algorithms not in text_algorithms:
+            err(f"Unsupported hash algorithm: {algorithms}")
+            return
+
+        digest = text_algorithms[algorithms](
+            _to_bytes(input_text)
+        ).hexdigest()
+
+        ok(f"{input_text} hashed by {algorithms}: {digest}")
+
+    elif hash_type == "file":
+        if algorithms not in text_algorithms:
+            err(f"Unsupported hash algorithm: {algorithms}")
+            return
+
+        command = f"{algorithms}sum"
+
+        try:
+            result = subprocess.run(
+                [command, input_text],
+                capture_output=True,
+                text=True,
+                check=True
+            )
+
+            digest = result.stdout.split()[0]
+            ok(f"{input_text} hashed by {algorithms}: {digest}")
+
+        except FileNotFoundError:
+            err(f"Command not found: {command}")
+
+        except subprocess.CalledProcessError as exc:
+            err(exc.stderr.strip() or "File hashing failed.")
+
+    else:
+        err("Available hash types are <text> and <file>")
 class PasswordGenerator(ABC):
     """Abstract base class for password generators."""
     def generate(self):
