@@ -120,9 +120,9 @@ def start(args: list):
         print(f"{palette[i % len(palette)]}{line}{Style.RESET_ALL}")
 
     print(f"{Fore.MAGENTA}{Style.BRIGHT}\n  ╭──────────── SecureKit ──────────────╮{Style.RESET_ALL}")
-    print(f"{Fore.MAGENTA}  │ Type 'help' for commands.        │{Style.RESET_ALL}")
-    print(f"{Fore.MAGENTA}  │ Type 'exit' to return to N-Toolkit│{Style.RESET_ALL}")
-    print(f"{Fore.MAGENTA}  ╰──────────────────────────────────╯{Style.RESET_ALL}\n")
+    print(f"{Fore.MAGENTA}  │ Type 'help' for commands.           │{Style.RESET_ALL}")
+    print(f"{Fore.MAGENTA}  │ Type 'exit' to return to N-Toolkit  │{Style.RESET_ALL}")
+    print(f"{Fore.MAGENTA}  ╰─────────────────────────────────────╯{Style.RESET_ALL}\n")
 
     if args:
         command = args[0].lower()
