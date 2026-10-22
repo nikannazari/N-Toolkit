@@ -6,6 +6,7 @@ import subprocess
 from abc import ABC, abstractmethod
 import hashlib
 import nltk
+from cachetools import cached , TTLCache
 import string
 import secrets
 from colorama import Fore , Style
@@ -115,8 +116,14 @@ class RandomPasswordGenerator(PasswordGenerator):
         )
         ok(f"Random Password : {password}")
         
-        
-nltk.download('words')
+CACHE = TTLCache(
+    maxsize=100,
+    ttl=60 * 60 * 24 * 7
+)
+
+@cached(CACHE)
+def update_curpos():
+    nltk.download('words')
 
 class MemorablePassword(PasswordGenerator):
     def __init__(self,easy,num_of_words,seprator,captalization):
@@ -127,6 +134,8 @@ class MemorablePassword(PasswordGenerator):
         self.num_of_words = num_of_words
         self.seprator = seprator
         self.captalization = True if captalization.lower() == "yes" else False
+
+        update_curpos()
         self.vocabulary = DEFAULT_WORDS if self.easy.lower() == "yes" else nltk.corpus.words.words()
         
     def generate(self):
