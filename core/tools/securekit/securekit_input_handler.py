@@ -75,6 +75,7 @@ def execute_command(command: str , args: list):
         if not args:
             securekit.err("Usage : password <type> <features>")
             securekit.info("    password pin <lenght>")
+            securekit.warn("        password pin 4")
             securekit.info("    password random <lenght> <include numbers> <include symbols>")
             securekit.warn("        password random 12 yes no")
             securekit.info("    password memorable <easy> <number of words> <seprator> <capitalization>")

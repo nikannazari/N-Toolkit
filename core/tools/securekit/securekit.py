@@ -160,9 +160,9 @@ CACHE = TTLCache(
     ttl=60 * 60 * 24 * 7
 )
 
-@cached(CACHE)
-def update_curpos():
-    nltk.download('words')
+# @cached(CACHE)
+# def update_curpos():
+#     nltk.download('words')
 
 class MemorablePassword(PasswordGenerator):
     def __init__(self,easy,num_of_words,seprator,captalization):
@@ -174,7 +174,7 @@ class MemorablePassword(PasswordGenerator):
         self.seprator = seprator
         self.captalization = True if captalization.lower() == "yes" else False
 
-        update_curpos()
+        # update_curpos()
         self.vocabulary = DEFAULT_WORDS if self.easy.lower() == "yes" else nltk.corpus.words.words()
         
     def generate(self):
