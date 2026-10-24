@@ -178,3 +178,13 @@ class MemorablePassword(PasswordGenerator):
                 for word in words
             ]
         ok(f"Memorable Password : {self.seprator.join(words)}")
+        
+class Encryptor:
+    def __init__(
+        self, 
+        type,
+        user_input,
+        password,
+        
+    ):
+        
