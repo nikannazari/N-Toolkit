@@ -113,12 +113,12 @@ def execute_command(command: str , args: list):
     if command == "encrypt":
         if not args:
             securekit.err("Usage encrypt <input_file> <output_file> <number of encoding iterations> <salt> <password>")
-            securekit.warn("    encrypt ~/file.txt ~/file.txt.enc 60000 yes")
+            securekit.warn("    encrypt ~/file.txt ~/file.txt.enc 60000 yes 1234")
             return
 
         elif len(args) != 5:
             securekit.err("Usage encrypt <input_file> <output_file> <number of encoding iterations> <salt> <password>")
-            securekit.warn("    encrypt ~/file.txt ~/file.txt.enc 60000 yes")
+            securekit.warn("    encrypt ~/file.txt ~/file.txt.enc 60000 yes 1234")
             return
 
         input_file = args[0]
@@ -128,6 +128,24 @@ def execute_command(command: str , args: list):
         password = args[4]
         encryptor = securekit.Encryptor(input_file,output_file,password,iteration,salt)
         encryptor.encrypt()
+        
+    if command == "decrypt":
+        if not args:
+            securekit.err("Usage decrypt <input_file> <output_file> <number of encoding iterations>")
+            securekit.warn("    decrypt ~/file.txt ~/file.txt.enc 60000")
+            return
+        
+        elif len(args) != 3:
+            securekit.err("Usage decrypt <input_file> <output_file> <number of encoding iterations>")
+            securekit.warn("    decrypt ~/file.txt ~/file.txt.enc 60000")
+            return
+        
+        input_file = args[0]
+        output_file = args[1]
+        iteration = args[2]
+        decryptor = securekit.Decryptor(input_file,output_file,iteration)
+        decryptor.decrypt()
+
         
 def start(args: list):
     """Entry point called by N-Toolkit."""
@@ -179,7 +197,7 @@ def start(args: list):
             os.system("clear" if os.name == "posix" else "cls")
             continue
         
-        if command not in ["hash", "password","encrypt"]:
+        if command not in ["hash", "password","encrypt","decrypt"]:
             securekit.err(f"command {command} not found")
 
         execute_command(command, command_args)
