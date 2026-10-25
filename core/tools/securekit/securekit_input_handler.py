@@ -110,6 +110,24 @@ def execute_command(command: str , args: list):
             capitalization = args[4]
             generator = securekit.MemorablePassword(easy,number_of_words,seprator,capitalization)
             generator.generate()
+    if command == "encrypt":
+        if not args:
+            securekit.err("Usage encrypt <input_file> <output_file> <number of encoding iterations> <salt> <password>")
+            securekit.warn("    encrypt ~/file.txt ~/file.txt.enc 60000 yes")
+            return
+
+        elif len(args) != 5:
+            securekit.err("Usage encrypt <input_file> <output_file> <number of encoding iterations> <salt> <password>")
+            securekit.warn("    encrypt ~/file.txt ~/file.txt.enc 60000 yes")
+            return
+
+        input_file = args[0]
+        output_file = args[1]
+        iteration = args[2]
+        salt = True if args[3] == "yes" else False
+        password = args[4]
+        encryptor = securekit.Encryptor(input_file,output_file,password,iteration,salt)
+        encryptor.encrypt()
         
 def start(args: list):
     """Entry point called by N-Toolkit."""
@@ -161,7 +179,7 @@ def start(args: list):
             os.system("clear" if os.name == "posix" else "cls")
             continue
         
-        if command not in ["hash", "password"]:
+        if command not in ["hash", "password","encrypt"]:
             securekit.err(f"command {command} not found")
 
         execute_command(command, command_args)
