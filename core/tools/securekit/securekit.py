@@ -177,14 +177,49 @@ class MemorablePassword(PasswordGenerator):
                 word.capitalize()
                 for word in words
             ]
-        ok(f"Memorable Password : {self.seprator.join(words)}")
-        
+        ok(f"Memorable Password : {self.seprator.join(words)}")        
+
 class Encryptor:
     def __init__(
-        self, 
-        type,
+        self,
         user_input,
+        user_output,
         password,
-        
+        iteration="60000",
+        salt=True,
     ):
-        
+        self.user_input = user_input
+        self.user_output = user_output
+        self.password = password
+        self.iteration = str(iteration)
+        self.salt = salt
+
+    def encrypt(self):
+        command = [
+            "openssl",
+            "enc",
+            "-aes-256-cbc",
+            "-pbkdf2",
+            "-iter", self.iteration,
+            "-pass", "stdin",
+            "-in", self.user_input,
+            "-out", self.user_output,
+        ]
+
+        if self.salt:
+            command.append("-salt")
+        else:
+            command.append("-nosalt")
+
+        result = subprocess.run(
+            command,
+            input=self.password + "\n",
+            capture_output=True,
+            text=True,
+        )
+
+        if result.returncode == 0:
+            ok("Encryption completed successfully.")
+        else:
+            err("Encryption failed.")
+            warn(result.stderr)
