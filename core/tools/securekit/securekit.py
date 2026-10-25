@@ -220,6 +220,43 @@ class Encryptor:
 
         if result.returncode == 0:
             ok("Encryption completed successfully.")
+
         else:
             err("Encryption failed.")
+            warn(result.stderr)
+            
+class Decryptor:
+    def __init__(
+        self,
+        user_input,
+        user_output,
+        iteration,
+    ):
+        self.iteration = str(iteration)
+        self.user_input = user_input
+        self.user_output = user_output
+    
+    def decrypt(self):
+        command = [
+            "openssl",
+            "enc",
+            "-d",
+            "-aes-256-cbc",
+            "-pbkdf2",
+            "-iter", self.iteration,
+            "-in", self.user_input,
+            "-out", self.user_output,
+        ]
+        
+        result = subprocess.run(
+            command,
+            capture_output=True,
+            text=True
+        )
+        
+        if result.returncode == 0:
+            ok("Decryption completed successfully.")
+            
+        else:
+            err("Decryption failed.")
             warn(result.stderr)
