@@ -3,10 +3,11 @@ securekit.py - Core logic of SecureKit
 """
 import os
 import subprocess
-from abc import ABC, abstractmethod
+from abc import ABC
 import hashlib
 import nltk
 from cachetools import cached , TTLCache
+from pathlib import Path
 import string
 import secrets
 from colorama import Fore , Style
@@ -260,3 +261,110 @@ class Decryptor:
         else:
             err("Decryption failed.")
             warn(result.stderr)
+
+
+class SSH_Generator:
+    def __init__(
+        self,
+        key_name,
+        comment,
+    ):
+        self.key_name = key_name
+        self.comment = comment
+
+    def generate_key(self):
+        
+        ssh_dir = Path.home() / ".ssh"
+        ssh_dir.mkdir(mode=0o700 , parents=True , exist_ok=True)
+        
+        key_path = ssh_dir / self.key_name
+        public_key_path = Path(f"{key_path}.pub")
+        
+        if key_path.exists() or public_key_path.exists():
+            err(f"A key is already exist in {key_path}")
+            
+        command = [
+            "ssh-keygen",
+            "-t" , "ed25519",
+            "-C" , self.comment,
+            "-f" , key_path
+        ]
+        
+        try:
+            result = subprocess.run(command , check=False)            
+            if result.returncode == 0:
+                ok(f"Key successfully generated in {key_path}")
+                
+            else:
+                err("SSH key generation was cancelled or failed")
+                
+        except FileNotFoundError:
+            err("ssh-keygen is not installed")
+            
+        
+def show_public_key(key_name):
+
+    public_key_path = Path.home() / ".ssh" / f"{key_name}.pub"
+    
+    if not public_key_path.is_file():
+        err("Error: Public key not found.")
+        return
+        
+    result = subprocess.run(
+        ["cat", str(public_key_path)],
+        check=False
+    )
+    
+    if result.returncode != 0:
+        err("Error: Could not display public key.")
+        
+def show_fingerprint(key_name):
+    public_key_path = Path.home() / ".ssh" / f"{key_name}.pub"
+    
+    if not public_key_path.is_file():
+        err("Error: Public key not found.")
+        return
+    
+    result = subprocess.run(
+        ["ssh-keygen", "-lf", str(public_key_path)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    
+    if result.returncode == 0:
+        ok(result.stdout.strip())
+        
+    else:
+        err("Error : Could not calculate fingerprint.")
+        if result.stderr :
+             warn(result.stderr.strip())
+             
+def list_key():
+    ssh_dir = Path.home() / ".ssh"
+    
+    if not ssh_dir.is_dir():
+        err("SSH directory does not exist.")
+        return
+    
+    public_keys = sorted(ssh_dir.glob("*.pub"))
+    
+    if not public_keys:
+        err("No public SSH keys found.")
+        return
+    
+    ok("SSH Keys : ")
+    print("-" * 40)
+
+    for public_key in public_keys:
+        private_key = public_key.with_suffix("")
+
+        info(f"Key name: {private_key.name}")
+        ok(f"Public key: {public_key.name}")
+
+        if private_key.is_file():
+            warn("Private key: Found")
+        else:
+            err("Private key: Not found")
+
+        print("-" * 40)
