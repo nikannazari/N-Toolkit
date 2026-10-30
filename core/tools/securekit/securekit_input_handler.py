@@ -145,8 +145,54 @@ def execute_command(command: str , args: list):
         iteration = args[2]
         decryptor = securekit.Decryptor(input_file,output_file,iteration)
         decryptor.decrypt()
-
         
+    if command == "ssh-key":
+        if not args:
+            securekit.err("Usage ssh-key <command> <arguments>")
+            securekit.warn("    ssh-key generate <key_name> <comment>")
+            securekit.warn("    ssh-key display <key_name>")
+            securekit.warn("    ssh-key fingerprint <key_name>")
+            securekit.warn("    ssh-key list")
+            return
+
+        command_type = args[0]
+        if command_type == "generate":
+
+            if len(args) != 3:
+                securekit.err("Usage ssh-key <command> <arguments>")
+                securekit.warn("    ssh-key generate <key_name> <comment>")
+                return
+
+            key_name = args[1]
+            comment = args[2]
+            generator = securekit.SSH_Generator(key_name,comment)
+            generator.generate_key()
+
+        elif command_type == "display":
+            if len(args) != 2:
+                securekit.err("Usage ssh-key <command> <arguments>")
+                securekit.warn("    ssh-key display <key_name>")
+                return
+
+            key_name = args[1]
+            securekit.show_public_key(key_name)
+        
+        elif command_type == "fingerprint":
+            if len(args) != 2:
+                securekit.err("Usage ssh-key <command> <arguments>")
+                securekit.warn("    ssh-key fingerprint <key_name>")
+                return
+            key_name = args[1]
+            securekit.show_fingerprint(key_name)   
+            
+        elif command_type == "list":
+            if len(args) != 1:
+                securekit.err("Usage ssh-key <command> <arguments>")
+                securekit.warn("    ssh-key list")
+
+            securekit.list_key()
+        
+                    
 def start(args: list):
     """Entry point called by N-Toolkit."""
     
@@ -197,7 +243,7 @@ def start(args: list):
             os.system("clear" if os.name == "posix" else "cls")
             continue
         
-        if command not in ["hash", "password","encrypt","decrypt"]:
+        if command not in ["hash", "password","encrypt","decrypt","ssh-key"]:
             securekit.err(f"command {command} not found")
 
         execute_command(command, command_args)
