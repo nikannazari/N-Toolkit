@@ -10,6 +10,8 @@ from cachetools import cached , TTLCache
 from pathlib import Path
 import string
 import secrets
+import tempfile
+import getpass
 from colorama import Fore , Style
 
 TOOL_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -19,6 +21,9 @@ def info(msg):  print(f"{Fore.CYAN}{msg}{Style.RESET_ALL}")
 def ok(msg):    print(f"{Fore.GREEN}✔ {msg}{Style.RESET_ALL}")
 def warn(msg):  print(f"{Fore.YELLOW}⚡ {msg}{Style.RESET_ALL}")
 def err(msg):   print(f"{Fore.RED}✘ {msg}{Style.RESET_ALL}")
+def ok_2(msg): print(f"{Fore.GREEN}{msg}{Style.RESET_ALL}")
+def warn_2(msg): print(f"{Fore.YELLOW}{msg}{Style.RESET_ALL}")
+def err_2(msg): print(f"{Fore.RED}{msg}{Style.RESET_ALL}")
 
 def _to_bytes(s):
         return s.encode('utf-8') if isinstance(s, str) else s
@@ -368,3 +373,325 @@ def list_key():
             err("Private key: Not found")
 
         print("-" * 40)
+        
+def generate_gpg_key(name, email):
+    if "\n" in name or "\n" in email:
+        err("Error: Invalid input.")
+        return
+
+    passphrase = getpass.getpass("Enter passphrase: ")
+
+    if not passphrase:
+        err("Please choose a passphrase.")
+        return
+
+    key_config = f"""Key-Type: eddsa
+Key-Curve: ed25519
+Key-Usage: sign cert auth
+Subkey-Type: ecdh
+Subkey-Curve: cv25519
+Subkey-Usage: encrypt
+Name-Real: {name}
+Name-Email: {email}
+Expire-Date: 1y
+Passphrase: {passphrase}
+%commit
+"""
+
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            delete=True
+        ) as config_file:
+
+            config_file.write(key_config)
+            config_file.flush()
+
+            result = subprocess.run(
+                [
+                    "gpg",
+                    "--batch",
+                    "--generate-key",
+                    config_file.name
+                ],
+                capture_output=True,
+                text=True,
+                check=False
+            )
+
+        if result.returncode == 0:
+            ok("GPG key generated successfully!")
+        else:
+            err("Error generating GPG key:")
+            warn(result.stderr)
+
+    except FileNotFoundError:
+        err("Error: GPG is not installed.")
+
+
+def list_gpg_keys():
+    try:
+        commands = {
+            "PUBLIC KEYS": ["gpg", "--list-keys", "--keyid-format", "LONG"],
+            "PRIVATE KEYS": ["gpg", "--list-secret-keys", "--keyid-format", "LONG"]
+        }
+
+        for title, command in commands.items():
+            result = subprocess.run(
+                command,
+                capture_output=True,
+                text=True,
+                check=False
+            )
+
+            print(f"{Fore.GREEN}\n{'=' * 50}{Style.RESET_ALL}")
+            info(title)
+            print(f"{Fore.GREEN}{'=' * 50}{Style.RESET_ALL}")
+
+            if result.returncode != 0:
+                err("Error retrieving keys.")
+                continue
+
+            if not result.stdout.strip():
+                err("No keys found.")
+            else:
+                warn(result.stdout)
+
+    except FileNotFoundError:
+        err("Error: GPG is not installed.")
+ 
+
+def encrypt_gpg():
+
+    info("\nGPG FILE ENCRYPTION")
+    warn_2("=" * 40)
+    ok_2("[1] Public Key Encryption")
+    ok_2("[2] Symmetric Encryption")
+    err_2("[0] Back")
+
+    mode = input("\nSelect encryption mode: ").strip()
+
+    if mode == "0":
+        return
+
+    if mode not in ("1", "2"):
+        err("Error: Invalid option.")
+        return
+
+    # Input file
+    input_path = input("\nEnter input file path: ").strip()
+
+    if not input_path:
+        err("Error: Input file path is required.")
+        return
+
+    input_file = Path(input_path).expanduser()
+
+    if not input_file.is_file():
+        err("Error: Input file does not exist.")
+        return
+
+    # Output file
+    default_output = Path(str(input_file) + ".gpg")
+
+    output_path = input(
+        f"Enter output file path [{default_output}]: "
+    ).strip()
+
+    output_file = (
+        Path(output_path).expanduser()
+        if output_path
+        else default_output
+    )
+
+    if output_file.resolve() == input_file.resolve():
+        err("Error: Input and output files cannot be the same.")
+        return
+
+    if output_file.exists():
+        err("Error: Output file already exists.")
+        return
+
+    # Build GPG command
+    command = ["gpg", "--batch", "--yes", "--output", str(output_file)]
+
+    if mode == "1":
+
+        info("\nPUBLIC KEY ENCRYPTION")
+
+        recipient = input(
+            "Enter recipient email, Key ID or Fingerprint: "
+        ).strip()
+
+        if not recipient:
+            err("Error: Recipient is required.")
+            return
+
+        command.extend([
+            "--encrypt",
+            "--recipient", recipient
+        ])
+
+    elif mode == "2":
+
+        info("\nSYMMETRIC ENCRYPTION")
+
+        passphrase = getpass.getpass("Enter passphrase: ")
+        confirm = getpass.getpass("Confirm passphrase: ")
+
+        if not passphrase:
+            err("Error: Passphrase cannot be empty.")
+            return
+
+        if passphrase != confirm:
+            err("Error: Passphrases do not match.")
+            return
+
+        command.extend([
+            "--symmetric",
+            "--cipher-algo", "AES256",
+            "--pinentry-mode", "loopback",
+            "--passphrase-fd", "0"
+        ])
+
+    # Input file
+    command.append(str(input_file))
+
+    try:
+
+        if mode == "2":
+            result = subprocess.run(
+                command,
+                input=passphrase + "\n",
+                capture_output=True,
+                text=True,
+                check=False
+            )
+        else:
+            result = subprocess.run(
+                command,
+                capture_output=True,
+                text=True,
+                check=False
+            )
+
+        if result.returncode == 0:
+
+            if output_file.is_file():
+                ok("\nFile encrypted successfully!")
+                warn(f"Output: {output_file}")
+            else:
+                err("Error: GPG did not create the output file.")
+
+        else:
+            err("\nEncryption failed.")
+
+            if result.stderr:
+                warn(result.stderr.strip())
+
+    except FileNotFoundError:
+        err("Error: GPG is not installed.")
+
+    except OSError as error:
+        err(f"System error: {error}")
+
+
+def decrypt_file():
+
+    info("\nGPG FILE DECRYPTION")
+    warn_2("=" * 40)
+
+    # Input encrypted file
+    input_path = input("\nEnter encrypted file path: ").strip()
+
+    if not input_path:
+        err("Error: Input file path is required.")
+        return
+
+    input_file = Path(input_path).expanduser()
+
+    if not input_file.is_file():
+        err("Error: Encrypted file does not exist.")
+        return
+
+    # Output file
+    default_output = (
+        input_file.with_suffix("")
+        if input_file.suffix == ".gpg"
+        else Path(str(input_file) + ".decrypted")
+    )
+
+    output_path = input(
+        f"Enter output file path [{default_output}]: "
+    ).strip()
+
+    output_file = (
+        Path(output_path).expanduser()
+        if output_path
+        else default_output
+    )
+
+    if output_file.resolve() == input_file.resolve():
+        err("Error: Input and output files cannot be the same.")
+        return
+
+    if output_file.exists():
+        err("Error: Output file already exists.")
+        return
+
+    # Ask for passphrase
+    passphrase = getpass.getpass(
+        "Enter passphrase (leave empty for public-key decryption): "
+    )
+
+    # Build GPG command
+    command = [
+        "gpg",
+        "--batch",
+        "--yes",
+        "--output", str(output_file),
+    ]
+
+    if passphrase:
+        command.extend([
+            "--pinentry-mode", "loopback",
+            "--passphrase-fd", "0"
+        ])
+
+    command.extend([
+        "--decrypt",
+        str(input_file)
+    ])
+
+    try:
+
+        result = subprocess.run(
+            command,
+            input=passphrase + "\n" if passphrase else None,
+            capture_output=True,
+            text=True,
+            check=False
+        )
+
+        if result.returncode == 0 and output_file.is_file():
+
+            ok("\nFile decrypted successfully!")
+            warn(f"Output: {output_file}")
+
+        else:
+
+            err("\nDecryption failed.")
+
+            # Remove incomplete output
+            if output_file.exists():
+                output_file.unlink()
+
+            if result.stderr:
+                err(result.stderr.strip())
+
+    except FileNotFoundError:
+        err("Error: GPG is not installed.")
+
+    except OSError as error:
+        err(f"System error: {error}")
