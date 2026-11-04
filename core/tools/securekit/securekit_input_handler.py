@@ -191,6 +191,58 @@ def execute_command(command: str , args: list):
                 securekit.warn("    ssh-key list")
 
             securekit.list_key()
+            
+    if command == "gpg":
+        if not args:
+            securekit.err("Usage gpg <command> <arguments>")
+            securekit.warn("    gpg generate <name> <email>")
+            securekit.warn("    gpg list")
+            securekit.warn("    gpg encrypt")
+            securekit.warn("    gpg decrypt")
+            return
+            
+        command_type = args[0]
+
+        if command_type not in ["list" , "encrypt" , "generate" , "decrypt"]:
+            securekit.err("Usage gpg <command> <arguments>")
+            securekit.warn("    gpg generate <name> <email>")
+            securekit.warn("    gpg list")
+            securekit.warn("    gpg encrypt")
+            securekit.warn("    gpg decrypt")
+        
+        if command_type == "generate":
+            if len(args) != 3:
+                securekit.err("Usage gpg <command> <arguments>")
+                securekit.warn("    gpg generate <name> <email>")
+                return
+            
+            name = args[1]
+            email = args[2]
+            securekit.generate_gpg_key(name,email)
+        
+        elif command_type == "list":
+            if len(args) != 1:
+                securekit.err("Usage gpg <command> <arguments>")
+                securekit.warn("    gpg list")
+            
+            securekit.list_gpg_keys()
+            
+        elif command_type == "encrypt":
+            if len(args) != 1:
+                securekit.err("Usage gpg <command> <arguments>")
+                securekit.warn("    gpg encrypt")
+                return
+            
+            securekit.encrypt_gpg()
+            
+        elif command_type == "decrypt":
+            if len(args) != 1:
+                securekit.err("Usage gpg <command> <arguments>")
+                securekit.warn("    gpg decrypt")
+                return
+            
+            securekit.decrypt_file()
+
         
                     
 def start(args: list):
@@ -243,7 +295,7 @@ def start(args: list):
             os.system("clear" if os.name == "posix" else "cls")
             continue
         
-        if command not in ["hash", "password","encrypt","decrypt","ssh-key"]:
+        if command not in ["hash", "password","encrypt","decrypt","ssh-key","gpg"]:
             securekit.err(f"command {command} not found")
 
         execute_command(command, command_args)
