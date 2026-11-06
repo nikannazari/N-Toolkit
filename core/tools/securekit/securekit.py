@@ -70,7 +70,7 @@ def warn_3(*msg):
     _print(COLORS["warning"], "⚡", *msg)
 
 
-def err_4(*msg):
+def err_3(*msg):
     _print(COLORS["error"], "✘", *msg)
 
 
