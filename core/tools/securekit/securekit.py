@@ -10,12 +10,27 @@ from cachetools import cached , TTLCache
 from pathlib import Path
 import string
 import secrets
+from datetime import datetime, timezone
+from cryptography import x509
 import tempfile
 import getpass
+from pprint import pprint
 from colorama import Fore , Style
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import (
+    rsa,
+    ec,
+    dsa,
+    ed25519,
+    ed448
+)
 
 TOOL_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(TOOL_DIR, "..", "..", ".."))
+
+# ===========================================
+# Terminal Color
+# ===========================================
 
 def info(msg):  print(f"{Fore.CYAN}{msg}{Style.RESET_ALL}")
 def ok(msg):    print(f"{Fore.GREEN}✔ {msg}{Style.RESET_ALL}")
@@ -24,6 +39,73 @@ def err(msg):   print(f"{Fore.RED}✘ {msg}{Style.RESET_ALL}")
 def ok_2(msg): print(f"{Fore.GREEN}{msg}{Style.RESET_ALL}")
 def warn_2(msg): print(f"{Fore.YELLOW}{msg}{Style.RESET_ALL}")
 def err_2(msg): print(f"{Fore.RED}{msg}{Style.RESET_ALL}")
+
+from colorama import Fore, Style, init
+
+init(autoreset=True)
+
+COLORS = {
+    "info": Fore.CYAN,
+    "success": Fore.GREEN,
+    "warning": Fore.YELLOW,
+    "error": Fore.RED,
+    "key": Fore.RED,
+    "value": Fore.WHITE,
+    "border": Fore.BLUE,
+}
+
+def _print(color, symbol, *msg):
+    print(f"{color}{symbol}", *msg, Style.RESET_ALL)
+
+
+def info_3(*msg):
+    _print(COLORS["info"], "ℹ", *msg)
+
+
+def ok_3(*msg):
+    _print(COLORS["success"], "✔", *msg)
+
+
+def warn_3(*msg):
+    _print(COLORS["warning"], "⚡", *msg)
+
+
+def err_4(*msg):
+    _print(COLORS["error"], "✘", *msg)
+
+
+def section(title):
+    width = 70
+    print(f"\n{COLORS['border']}{'━' * width}")
+    print(f"  {Fore.CYAN}{title}")
+    print(f"{COLORS['border']}{'━' * width}")
+
+
+def field(key, value, indent=2):
+    spaces = " " * indent
+
+    if isinstance(value, dict):
+        print(f"{spaces}{COLORS['key']}{key}{Style.RESET_ALL}:")
+        for sub_key, sub_value in value.items():
+            field(sub_key, sub_value, indent + 4)
+
+    elif isinstance(value, (list, tuple)):
+        if not value:
+            value = "Empty"
+        else:
+            value = ", ".join(str(i) for i in value)
+
+        print(
+            f"{spaces}{COLORS['key']}{key}{Style.RESET_ALL}: "
+            f"{COLORS['value']}{value}"
+        )
+
+    else:
+        print(
+            f"{spaces}{COLORS['key']}{key}{Style.RESET_ALL}: "
+            f"{COLORS['value']}{value}"
+        )
+        
 
 def _to_bytes(s):
         return s.encode('utf-8') if isinstance(s, str) else s
@@ -695,3 +777,206 @@ def decrypt_file():
 
     except OSError as error:
         err(f"System error: {error}")
+
+class CertificateInspector:
+    def __init__(self,certificate_path):
+        
+        self.certificate_path = Path(certificate_path)
+        self.certificate = None
+        
+    def load_certificate(self):
+        if not self.certificate_path.is_file():
+            err(f"File not found in {str(self.certificate_path)}")
+            return
+            
+        data = self.certificate_path.read_bytes()
+        
+        try: 
+            self.certificate = x509.load_pem_x509_certificate(data)
+            
+        except ValueError:
+            self.certificate = x509.load_der_x509_certificate(data)
+            
+        return self.certificate
+    
+    def get_subject(self):
+        if self.certificate is None:
+            err("Certificate not loaded")
+            
+        subject = self.certificate.subject
+        
+        return {
+            attribute.oid._name: attribute.value
+            for attribute in subject
+        }
+        
+    def get_issuer(self):
+        if self.certificate is None:
+            err("Certificate has not been loaded.")
+
+        issuer = self.certificate.issuer
+
+        return {
+            attribute.oid._name: attribute.value
+            for attribute in issuer
+        }
+        
+    def get_serial_number(self):
+        if self.certificate is None:
+            err("Certificate has not been loaded.")
+
+        return self.certificate.serial_number
+    
+    def get_version(self):
+        if self.certificate is None:
+            err("Certificate has not been loaded.")
+
+        return self.certificate.version.name
+    
+    def get_validity(self):
+        if self.certificate is None:
+            err("Certificate has not been loaded.")
+
+        return {
+            "valid_from": self.certificate.not_valid_before_utc,
+            "valid_until": self.certificate.not_valid_after_utc
+        }
+        
+    def get_status(self):
+        if self.certificate is None:
+            err("Certificate has not been loaded.")
+
+        now = datetime.now(timezone.utc)
+
+        valid_from = self.certificate.not_valid_before_utc
+        valid_until = self.certificate.not_valid_after_utc
+
+        if now < valid_from:
+            return "NOT_YET_VALID"
+
+        elif now > valid_until:
+            return "EXPIRED"
+
+        return "VALID"
+    
+    def get_signature_algorithm(self):
+        if self.certificate is None:
+            err("Certificate has not been loaded.")
+
+        return self.certificate.signature_hash_algorithm.name
+    
+    def get_public_key_info(self):
+        if self.certificate is None:
+            err("Certificate has not been loaded.")
+
+        public_key = self.certificate.public_key()
+
+        if isinstance(public_key, rsa.RSAPublicKey):
+            key_type = "RSA"
+            key_size = public_key.key_size
+
+        elif isinstance(public_key, ec.EllipticCurvePublicKey):
+            key_type = "Elliptic Curve"
+            key_size = public_key.key_size
+
+        elif isinstance(public_key, dsa.DSAPublicKey):
+            key_type = "DSA"
+            key_size = public_key.key_size
+
+        elif isinstance(public_key, ed25519.Ed25519PublicKey):
+            key_type = "Ed25519"
+            key_size = 256
+
+        elif isinstance(public_key, ed448.Ed448PublicKey):
+            key_type = "Ed448"
+            key_size = 448
+
+        else:
+            key_type = type(public_key).__name__
+            key_size = getattr(public_key, "key_size", None)
+
+        return {
+            "key_type": key_type,
+            "key_size": key_size
+        }
+        
+
+    def get_fingerprint(self):
+        if self.certificate is None:
+            err("Certificate has not been loaded.")
+
+        fingerprint = self.certificate.fingerprint(hashes.SHA256())
+
+        return fingerprint.hex(":").upper()
+
+    def get_subject_alternative_names(self):
+        if self.certificate is None:
+            err("Certificate has not been loaded.")
+
+        try:
+            extension = self.certificate.extensions.get_extension_for_class(
+                x509.SubjectAlternativeName
+            )
+
+            return {
+                "DNS": extension.value.get_values_for_type(x509.DNSName),
+                "IP": [
+                    str(ip)
+                    for ip in extension.value.get_values_for_type(x509.IPAddress)
+                ]
+            }
+
+        except x509.ExtensionNotFound:
+            return {
+                "DNS": [],
+                "IP": []
+            }
+            
+    def display_info(self):
+        if self.certificate is None:
+            err("Certificate has not been loaded.")
+
+        data = {
+            "Subject": self.get_subject(),
+            "Issuer": self.get_issuer(),
+            "Serial Number": self.get_serial_number(),
+            "Version": self.get_version(),
+            "Validity": self.get_validity(),
+            "Status": self.get_status(),
+            "Signature Algorithm": self.get_signature_algorithm(),
+            "Public Key": self.get_public_key_info(),
+            "SHA-256 Fingerprint": self.get_fingerprint(),
+            "Subject Alternative Names": self.get_subject_alternative_names()
+        }
+
+        for title, value in data.items():
+            section(title)
+
+            if isinstance(value, (dict, list, tuple)):
+                if isinstance(value, dict):
+                    for key, item in value.items():
+                        field(key, item)
+                else:
+                    for item in value:
+                        print(f"  {Fore.GREEN}• {item}")
+
+            else:
+                field("Value", value)
+
+        print(f"\n{COLORS['border']}{'━' * 70}")
+        ok("Certificate inspection completed.")
+
+        return data
+
+    def get_signature_algorithm(self):
+        if self.certificate is None:
+            err("Certificate has not been loaded.")
+
+        return {
+            "algorithm": self.certificate.signature_algorithm_oid._name,
+            "hash_algorithm": (
+                self.certificate.signature_hash_algorithm.name
+                if self.certificate.signature_hash_algorithm
+                else None
+            )
+        }
