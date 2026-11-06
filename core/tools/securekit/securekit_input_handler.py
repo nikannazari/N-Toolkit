@@ -242,8 +242,17 @@ def execute_command(command: str , args: list):
                 return
             
             securekit.decrypt_file()
+            
+    if command == "certificate":
+        if len(args) != 1:
+            securekit.err("Usage certificate <PATH>")
+            return
 
-        
+    path = args[0]
+    inspector = securekit.CertificateInspector(path)
+    inspector.load_certificate()
+    inspector.display_info()
+
                     
 def start(args: list):
     """Entry point called by N-Toolkit."""
@@ -295,7 +304,7 @@ def start(args: list):
             os.system("clear" if os.name == "posix" else "cls")
             continue
         
-        if command not in ["hash", "password","encrypt","decrypt","ssh-key","gpg"]:
+        if command not in ["hash", "password","encrypt","decrypt","ssh-key","gpg","certificate"]:
             securekit.err(f"command {command} not found")
 
         execute_command(command, command_args)
