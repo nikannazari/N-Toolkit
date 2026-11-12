@@ -51,7 +51,7 @@ def show_help():
 def execute_command(command: str , args: list):
     if command == "hash":
         if not args:
-            securekit.err("Usage: hash <algorithm> <type> <input text>")
+            securekit.err("Usage: hash <algorithm> <type> <input text or file>")
             securekit.info("Available algorithms are : mda5 , sha1 , sha256 , sha224 , sha384 , sha512")
             return
         
@@ -248,12 +248,64 @@ def execute_command(command: str , args: list):
             securekit.err("Usage certificate <PATH>")
             return
 
-    path = args[0]
-    inspector = securekit.CertificateInspector(path)
-    inspector.load_certificate()
-    inspector.display_info()
+        path = args[0]
+        inspector = securekit.CertificateInspector(path)
+        inspector.load_certificate()
+        inspector.display_info()
 
-                    
+
+    if command == "integrity":
+        if len(args) < 1:
+            securekit.err("Usage integrity <command_type>")
+            securekit.warn("    integrity check <input file> <hash> <algorithm>")
+            securekit.warn("    integrity create <input file> <output file> <algorithm>")
+            securekit.warn("    integrity verify <input directory> <baseline path>")
+            return
+        
+        Integrity = securekit.Integrity()    
+        command_type = args[0]
+
+        if command_type not in ["check","create","verify"]:
+            securekit.err("Usage integrity <command_type>")
+            securekit.warn("    integrity check <input file> <hash> <algorithm>")
+            securekit.warn("    integrity create <input file> <output file> <algorithm>")
+            securekit.warn("    integrity verify <input directory> <baseline path>")        
+            return
+
+        if command_type == "check":
+
+            if len(args) != 4:
+                securekit.err("Usage integrity <command_type> <arguments>")
+                securekit.warn("    integrity check <input file> <hash> <algorithm>")
+                return
+            input_file = args[1]
+            hash = args[2]
+            algorithm = args[3]
+            Integrity.check(input_file,hash,algorithm)
+            
+        if command_type == "create":
+            if len(args) != 4:
+                securekit.err("Usage integrity <command_type> <arguments>")
+                securekit.warn("    integrity create <input file> <output json file> <algorithm>")
+                return
+            
+            input_dir = args[1]
+            output_file = args[2]
+            algorithm = args[3]
+            
+            Integrity.create_baseline(input_dir,output_file,algorithm)
+            
+        if command_type == "verify":
+            if len(args) != 3:
+                securekit.err("Usage integrity <command_type> <arguments>")
+                securekit.warn("    integrity verify <input directory> <baseline path>")
+                return
+                
+            input_dir = args[1]
+            baseline_path = args[2]
+
+            Integrity.verify_baseline(input_dir,baseline_path)
+            
 def start(args: list):
     """Entry point called by N-Toolkit."""
     
@@ -304,7 +356,7 @@ def start(args: list):
             os.system("clear" if os.name == "posix" else "cls")
             continue
         
-        if command not in ["hash", "password","encrypt","decrypt","ssh-key","gpg","certificate"]:
+        if command not in ["hash", "password","encrypt","decrypt","ssh-key","gpg","certificate","integrity"]:
             securekit.err(f"command {command} not found")
 
         execute_command(command, command_args)
