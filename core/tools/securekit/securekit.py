@@ -2,6 +2,7 @@
 securekit.py - Core logic of SecureKit
 """
 import os
+import json
 import subprocess
 from abc import ABC
 import hashlib
@@ -980,3 +981,201 @@ class CertificateInspector:
                 else None
             )
         }
+
+
+class Integrity():
+    def __init__(self):
+        pass
+    
+    def hash(self, input_text, algorithms):
+        algorithms = algorithms.lower()
+
+        text_algorithms = {
+            "md5": hashlib.md5,
+            "sha1": hashlib.sha1,
+            "sha224": hashlib.sha224,
+            "sha256": hashlib.sha256,
+            "sha384": hashlib.sha384,
+            "sha512": hashlib.sha512,
+        }
+
+        if algorithms not in text_algorithms:
+            err(f"Unsupported hash algorithm: {algorithms}")
+            return
+
+        command = f"{algorithms}sum"
+
+        try:
+            result = subprocess.run(
+                [command, input_text],
+                capture_output=True,
+                text=True,
+                check=True
+            )
+
+            digest = result.stdout.split()[0]
+            ok(f"{input_text} hashed by {algorithms}: {digest}")
+
+        except FileNotFoundError:
+            err(f"Command not found: {command}")
+
+        except subprocess.CalledProcessError as exc:
+            err(exc.stderr.strip() or "File hashing failed.")
+            
+        return digest
+
+    def check(self,input_file,hash,algorithm):
+        
+        input_file_hash = self.hash(input_file,algorithm)
+        
+        ok("File has been checked successfully")
+        info(40 * "━")
+        status = f"{Fore.CYAN + Style.BRIGHT + Style.RESET_ALL}STATUS : "
+
+        if input_file_hash == hash:
+            status += f"{Fore.GREEN} SAME{Style.RESET_ALL}"
+            
+        else:
+            status += f"{Fore.RED} DIFFERENT{Style.RESET_ALL}"
+            
+        print(status)
+        
+    def chuncked_hash(self, file_path, algorithm="sha256"):
+        hash_function = hashlib.new(algorithm)
+
+        with open(file_path, "rb") as file:
+            for chunk in iter(lambda: file.read(4096), b""):
+                hash_function.update(chunk)
+
+        return hash_function.hexdigest()
+        
+    def create_baseline(self,input_directory,output_path = "../../../saved_data/securekit/integrity/",algorithm="sha256"):
+        #If baseline.json is checked inside the directory, it may be inserted into the scan itself.
+        #If a permission error occurs while reading one of the files, the operation may remain half-finished.
+
+        input_directory = Path(input_directory)
+        output_path = Path(output_path)
+
+        if not input_directory.is_dir():
+            err("Directory does not exist.")
+        
+        baseline = {
+            "algorithm" : algorithm,
+            "directory" : str(input_directory.resolve()),
+            "files" : {}
+        }
+        
+        for file_path in input_directory.rglob("*"):
+            if not file_path.is_file():
+                    continue
+
+            relative_path = str(file_path.relative_to(input_directory))
+
+            file_hash = self.chuncked_hash(file_path,algorithm)
+
+            baseline["files"][relative_path] = file_hash
+
+        with output_path.open("w", encoding="utf-8") as file:
+            json.dump(baseline, file, indent=4)
+
+        ok(f"File sucessfully checked and json is on {str(output_path.resolve())}")
+
+        info("Do you want to see the json file?")
+        print(f"[1] Yes \n[2] No")
+        user_input = input(">>>")
+        if user_input == "1":
+            pprint(baseline)
+
+    def verify_baseline(self,input_dir, baseline_path):
+
+        input_dir = Path(input_dir)
+        baseline_path = Path(baseline_path)
+
+        if not baseline_path.is_file():
+            err("Baseline file not found.")
+
+        if not input_dir.is_dir():
+            err("Directory does not exist.")
+
+        with baseline_path.open("r", encoding="utf-8") as file:
+            baseline = json.load(file)
+
+        algorithm = baseline["algorithm"]
+        original_files = baseline["files"]
+
+        current_files = {}
+
+        for file_path in input_dir.rglob("*"):
+
+            if file_path.is_symlink() or not file_path.is_file():
+                continue
+
+            relative_path = str(
+                file_path.relative_to(input_dir)
+            )
+
+            current_files[relative_path] = self.chuncked_hash(
+                file_path,
+                algorithm
+            )
+
+        changes = {
+            "added": [],
+            "modified": [],
+            "deleted": [],
+            "unchanged": []
+        }
+
+        for file_path, file_hash in current_files.items():
+
+            if file_path not in original_files:
+                changes["added"].append(file_path)
+
+            elif file_hash != original_files[file_path]:
+                changes["modified"].append(file_path)
+
+            else:
+                changes["unchanged"].append(file_path)
+
+        for file_path in original_files:
+
+            if file_path not in current_files:
+                changes["deleted"].append(file_path)
+
+        ok("Files has been successfuuly checked")
+        info("Changes : ")
+        print(f"{Fore.CYAN}{40 * "━"}{Style.RESET_ALL}")
+        # pprint(changes)
+        
+        for key , item in changes.items():
+            if key == "added":
+                print(f"{Fore.GREEN}Aded{Style.RESET_ALL}")
+                
+                for i in item:
+                    print(f"    {Fore.YELLOW}{i}")
+                    
+                print(f"{Fore.CYAN}{40 * "━"}{Style.RESET_ALL}")
+
+            if key == "deleted":
+                print(f"{Fore.RED}Deleted{Style.RESET_ALL}")
+                
+                for i in item:
+                    print(f"    {Fore.YELLOW}{i}")
+                    
+                print(f"{Fore.WHITE}{40 * "━"}{Style.RESET_ALL}")
+                    
+            if key == "modified":
+                print(f"{Fore.MAGENTA}Modified{Style.RESET_ALL}")
+                
+                for i in item:
+                    print(f"    {Fore.YELLOW}{i}")
+                    
+                print(f"{Fore.CYAN}{40 * "━"}{Style.RESET_ALL}")
+                    
+            if key == "unchanged":
+                print(f"{Fore.WHITE}Unchanged{Style.RESET_ALL}")
+                
+                for i in item:
+                    print(f"    {Fore.YELLOW}{i}")
+                    
+                print(f"{Fore.CYAN}{40 * "━"}{Style.RESET_ALL}")
