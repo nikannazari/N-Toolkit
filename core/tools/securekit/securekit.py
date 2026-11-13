@@ -1287,13 +1287,6 @@ class PermissionsChecker:
             "setgid": bool(permissions & stat.S_ISGID),
             "sticky": bool(permissions & stat.S_ISVTX),
         }
-
-        # print("\n========== Permissions Inspector ==========")
-
-        # for key, value in info.items():
-        #     print(f"{key:<24}: {value}")
-
-        # print("===========================================\n")
         
         ok_2("╭─────────────Permissions Inspector────────────────────────────────────────╮\n│")
         
