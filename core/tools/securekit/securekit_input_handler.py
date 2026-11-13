@@ -306,6 +306,17 @@ def execute_command(command: str , args: list):
 
             Integrity.verify_baseline(input_dir,baseline_path)
             
+    if command == "permission":
+        if len(args) != 1:
+            securekit.err("Wrong usage")
+            securekit.warn("    permission <path to directory or file>")
+            return
+                
+        path = args[0]
+        checker = securekit.PermissionsChecker(path)
+        checker.display_info()
+        
+
 def start(args: list):
     """Entry point called by N-Toolkit."""
     
@@ -356,7 +367,7 @@ def start(args: list):
             os.system("clear" if os.name == "posix" else "cls")
             continue
         
-        if command not in ["hash", "password","encrypt","decrypt","ssh-key","gpg","certificate","integrity"]:
+        if command not in ["hash", "password","encrypt","decrypt","ssh-key","gpg","certificate","integrity","permission"]:
             securekit.err(f"command {command} not found")
 
         execute_command(command, command_args)
