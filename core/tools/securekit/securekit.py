@@ -14,6 +14,9 @@ import secrets
 from datetime import datetime, timezone
 from cryptography import x509
 import tempfile
+import stat
+import pwd
+import grp
 import getpass
 from pprint import pprint
 from colorama import Fore , Style
@@ -1179,3 +1182,122 @@ class Integrity():
                     print(f"    {Fore.YELLOW}{i}")
                     
                 print(f"{Fore.CYAN}{40 * "━"}{Style.RESET_ALL}")
+
+
+class PermissionsChecker:
+
+    def __init__(self, path):
+        self.path = Path(path)
+
+    def _get_stat(self):
+        """Return file metadata after checking that the path exists."""
+        if not self.path.exists():
+            err(f"Path does not exist: {self.path}")
+
+        return self.path.stat()
+
+    def get_permissions(self):
+        """Return the complete file mode."""
+        return self._get_stat().st_mode
+
+    def get_octal_permissions(self):
+        """Return permissions in octal format, e.g. 0o755."""
+        permissions = stat.S_IMODE(self.get_permissions())
+        return oct(permissions)
+
+    def get_symbolic_permissions(self):
+        """Return permissions in symbolic format, e.g. rwxr-xr-x."""
+        permissions = stat.S_IMODE(self.get_permissions())
+
+        result = []
+
+        permission_map = [
+            (stat.S_IRUSR, "r"),
+            (stat.S_IWUSR, "w"),
+            (stat.S_IXUSR, "x"),
+            (stat.S_IRGRP, "r"),
+            (stat.S_IWGRP, "w"),
+            (stat.S_IXGRP, "x"),
+            (stat.S_IROTH, "r"),
+            (stat.S_IWOTH, "w"),
+            (stat.S_IXOTH, "x"),
+        ]
+
+        for bit, character in permission_map:
+            result.append(character if permissions & bit else "-")
+
+        # Handle special permission bits.
+        if permissions & stat.S_ISUID:
+            result[2] = "s" if permissions & stat.S_IXUSR else "S"
+
+        if permissions & stat.S_ISGID:
+            result[5] = "s" if permissions & stat.S_IXGRP else "S"
+
+        if permissions & stat.S_ISVTX:
+            result[8] = "t" if permissions & stat.S_IXOTH else "T"
+
+        return "".join(result)
+
+    def get_owner(self):
+        """Return the owner username."""
+        uid = self._get_stat().st_uid
+
+        try:
+            return pwd.getpwuid(uid).pw_name
+        except KeyError:
+            return str(uid)
+
+    def get_group(self):
+        """Return the group name."""
+        gid = self._get_stat().st_gid
+
+        try:
+            return grp.getgrgid(gid).gr_name
+        except KeyError:
+            return str(gid)
+
+    def check_read_access(self):
+        """Check whether the current process can read the path."""
+        return os.access(self.path, os.R_OK)
+
+    def check_write_access(self):
+        """Check whether the current process can write to the path."""
+        return os.access(self.path, os.W_OK)
+
+    def check_execute_access(self):
+        """Check whether the current process can execute or traverse the path."""
+        return os.access(self.path, os.X_OK)
+
+    def display_info(self):
+        """Display all collected permission information."""
+        self._get_stat()
+        permissions = stat.S_IMODE(self.get_permissions())
+
+        data = {
+            "Path": str(self.path.resolve()),
+            "Type": "Directory" if self.path.is_dir() else "File",
+            "Owner": self.get_owner(),
+            "Group": self.get_group(),
+            "Octal Permissions": self.get_octal_permissions(),
+            "Symbolic Permissions": self.get_symbolic_permissions(),
+            "Read Access": self.check_read_access(),
+            "Write Access": self.check_write_access(),
+            "Execute Access": self.check_execute_access(),
+            "setuid": bool(permissions & stat.S_ISUID),
+            "setgid": bool(permissions & stat.S_ISGID),
+            "sticky": bool(permissions & stat.S_ISVTX),
+        }
+
+        # print("\n========== Permissions Inspector ==========")
+
+        # for key, value in info.items():
+        #     print(f"{key:<24}: {value}")
+
+        # print("===========================================\n")
+        
+        ok_2("╭─────────────Permissions Inspector────────────────────────────────────────╮\n│")
+        
+        for key , value in data.items():
+            print(f"{Fore.GREEN}│{Style.RESET_ALL}   {Fore.YELLOW}{key:<24}{Style.RESET_ALL}{Fore.RED}: {Style.RESET_ALL}{Fore.CYAN}{value}{Style.RESET_ALL}")
+            
+        ok_2("│\n╰──────────────────────────────────────────────────────────────────────────╯")
