@@ -31,16 +31,16 @@ validator = _load_module("creator_validators.py" , "creator_validator")
 
 
 def execute_command(command: str , args: list):
-    # if command == "run":
-    #     if len(args) != 1:
-    #         creator.err("Wrong usage")
-    #         creator.warn("   run <path to project or project name>")
-    #         return
-
-    #     path = args[0]
-    #     Creator = creator.Creator(path)
-        
     Manager = creator.WorkspaceManager()
+
+    if command == "load":
+        if len(args) != 1:
+            creator.err("Wrong usage")
+            creator.warn("   load <path to project or project name>")
+            return
+
+        path_or_name = args[0]
+        Manager.load_workspace(path_or_name)
 
     if command == "list":
         Manager.list_workspaces()
@@ -64,7 +64,9 @@ def show_help():
     print(f"  {Fore.YELLOW}{'─' * 50}{Style.RESET_ALL}")
     
     print(f"  {Fore.MAGENTA}Workspaces Commads:{Style.RESET_ALL}")
+    print(f"  {Fore.YELLOW}create{Style.RESET_ALL}                    Create workspaces")
     print(f"  {Fore.YELLOW}list{Style.RESET_ALL}                    List workspaces")
+    print(f"  {Fore.YELLOW}load{Style.RESET_ALL}                    Load workspaces")
 
     print(f"  {Fore.MAGENTA}Commads:{Style.RESET_ALL}")
     print(f"  {Fore.YELLOW}python{Style.RESET_ALL}                    Create a Python project")
