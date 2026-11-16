@@ -6,8 +6,10 @@ import os
 import json
 from pprint import pprint
 from pathlib import Path
+import shlex
 from colorama import Fore , Style
 
+from src.services.custom_input import CustomInput
 
 TOOL_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(TOOL_DIR, "..", "..", ".."))
@@ -64,10 +66,118 @@ class Creator:
         print("CLI")
 
         
-class WorkspaceManager:
-    def __init__(self) -> None:
-        self.workspace_json = Path(__file__).resolve().parents[3] / "saved_data" / "creator" / "workspaces.json"
+class JsonManager:
+    def create(self , json_file):
+        self.workspace_name = str(json_file) + ".json"
+        self.workspace_json = Path(__file__).resolve().parents[3] / "saved_data" / "creator" / self.workspace_name
 
+        data = {
+            "workspaces": []
+        }
+
+        with self.workspace_json.open("w", encoding="utf-8") as file:
+            json.dump(data, file, indent=4)
+
+        ok("json file created successfully")
+        
+    def list(self):
+        creator_dir = Path(__file__).resolve().parents[3] / "saved_data" / "creator"
+
+        if not creator_dir.exists():
+            err("No creator directory found.")
+            return
+
+        json_files = list(creator_dir.glob("*.json"))
+
+        if not json_files:
+            err("No workspaces found.")
+            return
+
+        ok_2("Available Workspaces:")
+
+        for index, file in enumerate(json_files, start=1):
+            warn_2(f"{index}. {file.stem}")
+    def execute_command(self , command , args , json_file):
+        Manager = WorkspaceManager(json_file)
+
+        if command == "load":
+            if len(args) != 1:
+                err("Wrong usage")
+                warn("   load <path to project or project name>")
+                return
+
+            path_or_name = args[0]
+            Manager.load_workspace(path_or_name)
+
+        elif command == "list":
+            Manager.list_workspaces()
+            
+        elif command == "create":
+            if len(args) != 2:
+                err("Wrong usage")
+                warn("   create <path> <name>")
+                return
+
+            directory = args[0]
+            name = args[1]
+            Manager.create_workspace(directory , name)  
+        
+        else:
+            err("Command not found, please type help or ? to see available commands.")    
+            
+    def load(self,json_file):
+        self.workspace_name = str(json_file) + ".json"
+        self.workspace_json = Path(__file__).resolve().parents[3] / "saved_data" / "creator" / self.workspace_name
+
+        creator_input = CustomInput()
+    
+        while True:
+            try:
+                prompt = f"{Fore.MAGENTA}{json_file}{Style.RESET_ALL}{Fore.YELLOW} ❯ {Style.RESET_ALL}"
+                    
+                user_input = creator_input.get_input(prompt).strip()
+            except (EOFError, KeyboardInterrupt):
+                print(f"\n{Fore.CYAN}  Returning to Tool...{Style.RESET_ALL}\n")
+                return True
+
+            if not user_input:
+                continue
+            
+            parts = shlex.split(user_input)
+            command = parts[0].lower()
+            command_args = parts[1:]
+            
+            if command in ["exit" , "quit" , "q" , "test"]:
+                print(f"\n{Fore.CYAN}  Returning to Tool...{Style.RESET_ALL}\n")
+                return True
+            
+            if command in ["help" , "?"]:
+                print(f"\n{Fore.CYAN}{Style.BRIGHT}Creator Tool Help{Style.RESET_ALL}")
+                print(f"  {Fore.YELLOW}{'─' * 50}{Style.RESET_ALL}")
+                
+                print(f"  {Fore.MAGENTA}Json file Commands:{Style.RESET_ALL}")
+                print(f"  {Fore.YELLOW}create{Style.RESET_ALL}                    Create workspaces")
+                print(f"  {Fore.YELLOW}list{Style.RESET_ALL}                      List workspaces")
+                print(f"  {Fore.YELLOW}load{Style.RESET_ALL}                      Load workspaces")
+                print(f"\n  {Fore.MAGENTA}System:{Style.RESET_ALL}")
+                print(f"  {Fore.YELLOW}help{Style.RESET_ALL}                      Show this help")
+                print(f"  {Fore.YELLOW}clear{Style.RESET_ALL}                     Clear screen")
+                print(f"  {Fore.YELLOW}exit{Style.RESET_ALL}                      Return to N-Toolkit")
+
+                print(f"  {Fore.YELLOW}{'─' * 50}{Style.RESET_ALL}\n")
+                continue
+            
+            if command == "clear":
+                os.system("clear" if os.name == "posix" else "cls")    
+                continue
+
+            self.execute_command(command , command_args , json_file)
+        
+class WorkspaceManager:
+    def __init__(self , json_file) -> None:
+        json_file = str(json_file) + ".json"
+        self.workspace_json = Path(__file__).resolve().parents[3] / "saved_data" / "creator" / json_file
+        
     def create_workspace(self , directory , name):
         with self.workspace_json.open("r",encoding="utf-8") as file:
             data = json.load(file)
@@ -110,20 +220,56 @@ class WorkspaceManager:
 
         prompt = f"{Fore.YELLOW}{workspace["name"]}{Fore.CYAN}>>>{Style.RESET_ALL} "
         creator = Creator(workspace["path"])
+        creator_input = CustomInput()
         
         while True:
-            user_input = input(prompt)
+            try:
+                user_input = creator_input.get_input(prompt).strip()
+                
+            except(EOFError , KeyboardInterrupt):
+                print(f"\n{Fore.CYAN}  Returning to json...{Style.RESET_ALL}\n")
+                return
+            
+            if not user_input:
+                continue
+
             if user_input in ["exit","quit","q"]:
+                print(f"\n{Fore.CYAN}  Returning to json...{Style.RESET_ALL}\n")
                 break
+            
+            if user_input in ["help" , "?"]:
+                print(f"\n{Fore.CYAN}{Style.BRIGHT}Creator Tool Help{Style.RESET_ALL}")
+                print(f"  {Fore.YELLOW}{'─' * 50}{Style.RESET_ALL}")
+
+                print(f"  {Fore.MAGENTA}Commads:{Style.RESET_ALL}")
+                print(f"  {Fore.YELLOW}python{Style.RESET_ALL}                    Create a Python project")
+                print(f"  {Fore.YELLOW}django{Style.RESET_ALL}                    Create a Django project")
+                print(f"  {Fore.YELLOW}flask{Style.RESET_ALL}                     Create a Flask project")
+                print(f"  {Fore.YELLOW}fastapi{Style.RESET_ALL}                   Create a FastAPI project")
+                print(f"  {Fore.YELLOW}react{Style.RESET_ALL}                     Create a React project")
+                print(f"  {Fore.YELLOW}vue{Style.RESET_ALL}                       Create a Vue project")
+                print(f"  {Fore.YELLOW}node{Style.RESET_ALL}                      Create a Node.js project")
+                print(f"  {Fore.YELLOW}rust{Style.RESET_ALL}                      Create a Rust project")
+                print(f"  {Fore.YELLOW}cpp{Style.RESET_ALL}                       Create a C++ project")
+                print(f"  {Fore.YELLOW}cli{Style.RESET_ALL}                       Create a CLI tool project")
+
+                print(f"\n  {Fore.MAGENTA}System:{Style.RESET_ALL}")
+                print(f"  {Fore.YELLOW}help{Style.RESET_ALL}                      Show this help")
+                print(f"  {Fore.YELLOW}clear{Style.RESET_ALL}                     Clear screen")
+                print(f"  {Fore.YELLOW}exit{Style.RESET_ALL}                      Return to N-Toolkit")
+
+                print(f"  {Fore.YELLOW}{'─' * 50}{Style.RESET_ALL}\n")
+
+                continue
+            
+            if user_input == "clear":
+                os.system("clear" if os.name == "posix" else "cls")
+                continue
 
             command = getattr(creator , user_input , None)
             
             if callable(command):
                 command()
-                
-            elif user_input == "":
-                continue
 
-            else:
-                err("Invalid input!")
-
+            if not callable(command):
+                err("Command not found , type help or ? for see the help")
