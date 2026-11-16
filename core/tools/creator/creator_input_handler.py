@@ -31,31 +31,31 @@ validator = _load_module("creator_validators.py" , "creator_validator")
 
 
 def execute_command(command: str , args: list):
-    Manager = creator.WorkspaceManager()
+    Manager = creator.JsonManager()
 
     if command == "load":
         if len(args) != 1:
             creator.err("Wrong usage")
-            creator.warn("   load <path to project or project name>")
+            creator.warn("   load <json file name>")
             return
 
-        path_or_name = args[0]
-        Manager.load_workspace(path_or_name)
+        file_name = args[0]
+        Manager.load(file_name)
 
-    if command == "list":
-        Manager.list_workspaces()
+    elif command == "list":
+        Manager.list()
         
-    if command == "create":
-        if len(args) != 2:
+    elif command == "create":
+        if len(args) != 1:
             creator.err("Wrong usage")
-            creator.warn("   create <path> <name>")
+            creator.warn("   create <name>")
             return
-        
-    
 
-        directory = args[0]
-        name = args[1]
-        Manager.create_workspace(directory , name)
+        file_name = args[0]
+        Manager.create(file_name)
+        
+    else:
+        creator.err("Command not found, please type help or ? to see available commands.")
                 
 
 
@@ -63,22 +63,27 @@ def show_help():
     print(f"\n{Fore.CYAN}{Style.BRIGHT}Creator Tool Help{Style.RESET_ALL}")
     print(f"  {Fore.YELLOW}{'─' * 50}{Style.RESET_ALL}")
     
-    print(f"  {Fore.MAGENTA}Workspaces Commads:{Style.RESET_ALL}")
-    print(f"  {Fore.YELLOW}create{Style.RESET_ALL}                    Create workspaces")
-    print(f"  {Fore.YELLOW}list{Style.RESET_ALL}                    List workspaces")
-    print(f"  {Fore.YELLOW}load{Style.RESET_ALL}                    Load workspaces")
+    print(f"  {Fore.MAGENTA}Json Commads:{Style.RESET_ALL}")
+    print(f"  {Fore.YELLOW}create{Style.RESET_ALL}                    Create json file")
+    print(f"  {Fore.YELLOW}list{Style.RESET_ALL}                      List json files")
+    print(f"  {Fore.YELLOW}load{Style.RESET_ALL}                      Load json file")
 
-    print(f"  {Fore.MAGENTA}Commads:{Style.RESET_ALL}")
-    print(f"  {Fore.YELLOW}python{Style.RESET_ALL}                    Create a Python project")
-    print(f"  {Fore.YELLOW}django{Style.RESET_ALL}                    Create a Django project")
-    print(f"  {Fore.YELLOW}flask{Style.RESET_ALL}                     Create a Flask project")
-    print(f"  {Fore.YELLOW}fastapi{Style.RESET_ALL}                   Create a FastAPI project")
-    print(f"  {Fore.YELLOW}react{Style.RESET_ALL}                     Create a React project")
-    print(f"  {Fore.YELLOW}vue{Style.RESET_ALL}                       Create a Vue project")
-    print(f"  {Fore.YELLOW}node{Style.RESET_ALL}                      Create a Node.js project")
-    print(f"  {Fore.YELLOW}rust{Style.RESET_ALL}                      Create a Rust project")
-    print(f"  {Fore.YELLOW}cpp{Style.RESET_ALL}                       Create a C++ project")
-    print(f"  {Fore.YELLOW}cli{Style.RESET_ALL}                       Create a CLI tool project")
+    # print(f"  {Fore.MAGENTA}Workspaces Commads:{Style.RESET_ALL}")
+    # print(f"  {Fore.YELLOW}create{Style.RESET_ALL}                    Create workspaces")
+    # print(f"  {Fore.YELLOW}list{Style.RESET_ALL}                      List workspaces")
+    # print(f"  {Fore.YELLOW}load{Style.RESET_ALL}                      Load workspaces")
+
+    # print(f"  {Fore.MAGENTA}Commads:{Style.RESET_ALL}")
+    # print(f"  {Fore.YELLOW}python{Style.RESET_ALL}                    Create a Python project")
+    # print(f"  {Fore.YELLOW}django{Style.RESET_ALL}                    Create a Django project")
+    # print(f"  {Fore.YELLOW}flask{Style.RESET_ALL}                     Create a Flask project")
+    # print(f"  {Fore.YELLOW}fastapi{Style.RESET_ALL}                   Create a FastAPI project")
+    # print(f"  {Fore.YELLOW}react{Style.RESET_ALL}                     Create a React project")
+    # print(f"  {Fore.YELLOW}vue{Style.RESET_ALL}                       Create a Vue project")
+    # print(f"  {Fore.YELLOW}node{Style.RESET_ALL}                      Create a Node.js project")
+    # print(f"  {Fore.YELLOW}rust{Style.RESET_ALL}                      Create a Rust project")
+    # print(f"  {Fore.YELLOW}cpp{Style.RESET_ALL}                       Create a C++ project")
+    # print(f"  {Fore.YELLOW}cli{Style.RESET_ALL}                       Create a CLI tool project")
 
     print(f"\n  {Fore.MAGENTA}System:{Style.RESET_ALL}")
     print(f"  {Fore.YELLOW}help{Style.RESET_ALL}                      Show this help")
