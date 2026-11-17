@@ -39,7 +39,11 @@ def execute_command(command: str , args: list):
             creator.warn("   load <json file name>")
             return
 
-        file_name = args[0]
+        file_name = args[0]        
+        if not Manager.available_list(file_name):
+            Manager.list()
+            return
+
         Manager.load(file_name)
 
     elif command == "list":
