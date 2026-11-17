@@ -32,11 +32,63 @@ def err_2(msg): print(f"{Fore.RED}{msg}{Style.RESET_ALL}")
 # ===========================================
 
 class Creator:
-    def __init__(self , directory) -> None:
-        self.directory = Path(directory)
+
+    def __init__(self, directory) -> None:
+        self.directory = Path(directory).expanduser()
         
+    def python_input(self):
+        project_name = input(f"{Fore.CYAN}Enter your project directory name : {Style.RESET_ALL}")
+        return project_name
+
     def python(self):
-        print("Python")
+        project_name = self.python_input()
+                # Create workspace directory
+        self.directory.mkdir(parents=True, exist_ok=True)
+
+        project_path = self.directory / project_name
+
+        if project_path.exists():
+            raise FileExistsError(
+                f"Project already exists: {project_path}"
+            )
+
+        # Create project directories
+        (project_path / "src").mkdir(parents=True)
+
+        # Create project files
+        files = {
+            "main.py": '''def main():
+    print("Hello, World!")
+
+
+if __name__ == "__main__":
+    main()
+''',
+
+            "src/__init__.py": "",
+
+            "requirements.txt": "",
+
+            "README.md": f"# {project_name}\n\nA Python project.\n",
+
+            ".gitignore": '''__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.pytest_cache/
+.idea/
+.vscode/
+'''
+        }
+
+        for filename, content in files.items():
+            file_path = project_path / filename
+            file_path.write_text(content, encoding="utf-8")
+
+        ok(f"Project created successfully: {project_path}")
+
+        return project_path
 
     def django(self):
         print("Django")
@@ -297,3 +349,4 @@ class WorkspaceManager:
 
             if not callable(command):
                 err("Command not found , type help or ? for see the help")
+            
