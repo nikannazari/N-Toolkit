@@ -96,7 +96,31 @@ class JsonManager:
         ok_2("Available Workspaces:")
 
         for index, file in enumerate(json_files, start=1):
-            warn_2(f"{index}. {file.stem}")
+            print(f"   {Fore.YELLOW}{index}{Fore.RED}. {Fore.CYAN}{file.stem}{Style.RESET_ALL}")
+            
+    def available_list(self , target_json):
+        creator_dir = Path(__file__).resolve().parents[3] / "saved_data" / "creator"
+
+        if not creator_dir.exists():
+            err("No creator directory found.")
+            return
+
+        json_files = list(creator_dir.glob("*.json"))
+
+        if not json_files:
+            err("No workspaces found.")
+            return
+        
+        is_exist = any(file.stem == target_json for file in json_files)
+
+        if not is_exist:
+            err("Json file not found")
+            self.list
+            return False
+        
+        else:
+            return True
+
     def execute_command(self , command , args , json_file):
         Manager = WorkspaceManager(json_file)
 
