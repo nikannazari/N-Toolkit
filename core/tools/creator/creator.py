@@ -6,6 +6,8 @@ import os
 import json
 from pprint import pprint
 from pathlib import Path
+import subprocess
+import venv
 import shlex
 from colorama import Fore , Style
 
@@ -31,26 +33,56 @@ def err_2(msg): print(f"{Fore.RED}{msg}{Style.RESET_ALL}")
 # Main Tool Functions
 # ===========================================
 
+
 class Creator:
 
     def __init__(self, directory) -> None:
         self.directory = Path(directory).expanduser()
-        
+
+    # ==============================
+    # Input Handler
+    # ==============================
+
     def python_input(self):
-        project_name = input(f"{Fore.CYAN}Enter your project directory name : {Style.RESET_ALL}")
+        project_name = input(
+            f"{Fore.CYAN}Enter your project directory name : {Style.RESET_ALL}"
+        ).strip()
+
         return project_name
 
+    # ==============================
+    # Virtual Environment
+    # ==============================
+
+    def create_venv(self, project_path):
+        venv_path = project_path / ".venv"
+
+        if venv_path.exists():
+            warn(f"Virtual environment already exists: {venv_path}")
+            return venv_path
+
+        venv.create(venv_path, with_pip=True)
+
+        ok(f"Virtual environment created: {venv_path}")
+
+        return venv_path
+
+    # ==============================
+    # Python Project
+    # ==============================
+
     def python(self):
+
         project_name = self.python_input()
-                # Create workspace directory
+
+        # Create workspace directory
         self.directory.mkdir(parents=True, exist_ok=True)
 
         project_path = self.directory / project_name
 
         if project_path.exists():
-            raise FileExistsError(
-                f"Project already exists: {project_path}"
-            )
+            err(f"Project already exists: {project_path}")
+            return
 
         # Create project directories
         (project_path / "src").mkdir(parents=True)
@@ -86,12 +118,144 @@ venv/
             file_path = project_path / filename
             file_path.write_text(content, encoding="utf-8")
 
+        # Create virtual environment
+        self.create_venv(project_path)
+
         ok(f"Project created successfully: {project_path}")
 
         return project_path
 
-    def django(self):
-        print("Django")
+    # ==============================
+    # Django Server Runner
+    # ==============================
+
+    def run_django(self, project_path):
+
+        python = project_path / ".venv/bin/python"
+
+        process = subprocess.Popen(
+            [str(python), "manage.py", "runserver"],
+            cwd=project_path
+        )
+
+        info("Django server is running.")
+        warn_2("Type 'q', 'quit', or 'exit' to stop the server.")
+
+        while True:
+            user_input = input("> ").strip().lower()
+
+            if user_input in ["q", "quit", "exit"]:
+                process.terminate()
+                process.wait()
+                ok("Django server stopped.")
+                break
+
+            elif process.poll() is not None:
+                warn("Django server has already stopped.")
+                break
+
+            else:
+                warn_2("Unknown command. Type q, quit, or exit to stop.")
+
+    # ==============================
+    # Django Project
+    # ==============================
+
+    def django(self, project_name="DjangoProject"):
+
+        project_name = self.python_input()
+
+        # Create workspace directory
+        self.directory.mkdir(parents=True, exist_ok=True)
+
+        project_path = self.directory / project_name
+
+        if project_path.exists():
+            err(f"Project already exists: {project_path}")
+            return
+
+        # Create project directory
+        project_path.mkdir(parents=True)
+
+        # Create virtual environment
+        self.create_venv(project_path)
+
+        python = project_path / ".venv/bin/python"
+
+        # Install Django
+        try:
+            subprocess.run(
+                [str(python), "-m", "pip", "install", "django"],
+                check=True
+            )
+
+        except subprocess.CalledProcessError:
+            err("Django installation failed.")
+            return
+
+        # Generate Django project
+        try:
+            subprocess.run(
+                [
+                    str(python),
+                    "-m",
+                    "django",
+                    "startproject",
+                    project_name,
+                    str(project_path)
+                ],
+                check=True
+            )
+
+        except subprocess.CalledProcessError:
+            err("Django project creation failed.")
+            return
+
+        # Create additional files
+        files = {
+            "requirements.txt": "Django\n",
+
+            "README.md": (
+                f"# {project_name}\n\n"
+                "A Django web application.\n\n"
+                "## Run\n\n"
+                "```bash\n"
+                "python manage.py runserver\n"
+                "```\n"
+            ),
+
+            ".gitignore": '''__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+db.sqlite3
+staticfiles/
+.idea/
+.vscode/
+'''
+        }
+
+        for filename, content in files.items():
+            file_path = project_path / filename
+            file_path.write_text(content, encoding="utf-8")
+
+        ok(f"Django project created: {project_path}")
+
+        # Ask to run server
+        warn_2("Do you want to run it? [y/n]")
+        user_input = input("> ").strip().lower()
+
+        if user_input in ["y", "yes"]:
+            self.run_django(project_path)
+
+        elif user_input in ["n", "no"]:
+            info("Skipping server startup.")
+
+        else:
+            err("Invalid command.")
+
+        return project_path
 
     def flask(self):
         print("Flask")
