@@ -385,6 +385,15 @@ class JsonManager:
             directory = args[0]
             name = args[1]
             Manager.create_workspace(directory , name)  
+            
+        elif command == "delete":
+            if len(args) != 1:
+                err("Wrong usage")
+                warn("   delete <name>")
+                return
+            
+            name = args[0]
+            Manager.delete_workspace(name)
         
         else:
             err("Command not found, please type help or ? to see available commands.")    
@@ -468,6 +477,19 @@ class WorkspaceManager:
         for i in data["workspaces"]:
             print(f"    {Fore.CYAN}{i["name"]}{Style.RESET_ALL} {Fore.RED}==>{Style.RESET_ALL} {Fore.YELLOW}{i["path"]}{Style.RESET_ALL}")
             
+    def delete_workspace(self , name):
+        with self.workspace_json.open("r",encoding="utf-8") as file:
+            data = json.load(file)
+
+        for i in data["workspaces"]:
+            if i["name"] == name:
+                data["workspaces"].remove(i)
+                ok("Removed")
+        
+
+        with self.workspace_json.open("w") as file:
+            json.dump(data, file, indent=4)
+
     def load_workspace(self , path_or_name):
         with self.workspace_json.open("r" ,encoding="utf-8") as file:
             data = json.load(file)
