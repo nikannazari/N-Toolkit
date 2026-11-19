@@ -58,6 +58,15 @@ def execute_command(command: str , args: list):
         file_name = args[0]
         Manager.create(file_name)
         
+    elif command == "delete":
+        if len(args) != 1:
+            creator.err("Wrong usage")
+            creator.warn("   delete <file_name>")
+            return
+        
+        file_name = args[0]
+        Manager.delete(file_name)
+        
     else:
         creator.err("Command not found, please type help or ? to see available commands.")
                 

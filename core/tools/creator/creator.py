@@ -295,7 +295,31 @@ class JsonManager:
             json.dump(data, file, indent=4)
 
         ok("json file created successfully")
+    
+    def delete(self , json_file):
+        workspace_name = str(json_file) + ".json"
+        workspace_json = Path(__file__).resolve().parents[3] / "saved_data" / "creator" / workspace_name
         
+        if not workspace_json.exists():
+            err("File is not exists")
+            return
+        creator_input = CustomInput()  
+        prompt = "Are you sure? [y/n] :"
+        user_input = creator_input.get_input(prompt).strip()
+        if not user_input in ["Yes","yes","y","Y","No","no","N","n"]:
+            err("Wrong input")
+            return
+
+        elif user_input in ["No","no","N","n"]:
+            warn("Cancled")
+            return
+
+        subprocess.run([
+            "rm",
+            workspace_json.resolve()
+        ])
+
+        ok_2("Json file sucessfully removed")
     def list(self):
         creator_dir = Path(__file__).resolve().parents[3] / "saved_data" / "creator"
 
