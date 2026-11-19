@@ -430,6 +430,7 @@ class JsonManager:
                 
                 print(f"  {Fore.MAGENTA}Json file Commands:{Style.RESET_ALL}")
                 print(f"  {Fore.YELLOW}create{Style.RESET_ALL}                    Create workspaces")
+                print(f"  {Fore.YELLOW}delete{Style.RESET_ALL}                    Delete workspaces")
                 print(f"  {Fore.YELLOW}list{Style.RESET_ALL}                      List workspaces")
                 print(f"  {Fore.YELLOW}load{Style.RESET_ALL}                      Load workspaces")
                 print(f"\n  {Fore.MAGENTA}System:{Style.RESET_ALL}")

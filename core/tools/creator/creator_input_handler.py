@@ -78,6 +78,7 @@ def show_help():
     
     print(f"  {Fore.MAGENTA}Json Commads:{Style.RESET_ALL}")
     print(f"  {Fore.YELLOW}create{Style.RESET_ALL}                    Create json file")
+    print(f"  {Fore.YELLOW}delete{Style.RESET_ALL}                    Delete json file")
     print(f"  {Fore.YELLOW}list{Style.RESET_ALL}                      List json files")
     print(f"  {Fore.YELLOW}load{Style.RESET_ALL}                      Load json file")
 
