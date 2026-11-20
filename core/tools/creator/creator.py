@@ -456,6 +456,13 @@ class WorkspaceManager:
         with self.workspace_json.open("r",encoding="utf-8") as file:
             data = json.load(file)
 
+        directory_path = Path(directory)
+        if not directory_path.exists():
+            user_input = input("Directory does not exists are you sure? [y/n]: ")
+            if user_input in ["n","N","No","no"]:
+                warn("Cancled")
+                return
+        
         new_workspace = {
             "id": "ws_001",
             "name": name,
