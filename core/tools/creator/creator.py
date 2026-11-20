@@ -258,29 +258,396 @@ staticfiles/
         return project_path
 
     def flask(self):
-        print("Flask")
+        project_name = self.python_input()
+
+        self.directory.mkdir(parents=True, exist_ok=True)
+        project_path = self.directory / project_name
+
+        if project_path.exists():
+            err(f"Project already exists: {project_path}")
+            return
+
+        project_path.mkdir(parents=True)
+
+        self.create_venv(project_path)
+        python = project_path / ".venv/bin/python"
+
+        subprocess.run(
+            [str(python), "-m", "pip", "install", "flask"],
+            check=True
+        )
+
+        files = {
+            "app.py": '''from flask import Flask
+
+app = Flask(__name__)
+
+@app.route("/")
+def home():
+    return "Hello, Flask!"
+
+if __name__ == "__main__":
+    app.run(debug=True)
+    ''',
+
+            "requirements.txt": "flask\n",
+
+            "README.md": f"# {project_name}\n\nA Flask project.\n",
+
+            ".gitignore": '''__pycache__/
+    *.py[cod]
+    .venv/
+    venv/
+    .env
+    .pytest_cache/
+    .idea/
+    .vscode/
+    '''
+        }
+
+        for filename, content in files.items():
+            (project_path / filename).write_text(content, encoding="utf-8")
+
+        ok(f"Flask project created: {project_path}")
+
+        run = input(f"{Fore.CYAN}Run Flask project? (y/n): {Style.RESET_ALL}").strip().lower()
+
+        if run == "y":
+            subprocess.Popen([str(python), "app.py"], cwd=project_path)
+
 
     def fastapi(self):
-        print("FastAPI")
+        project_name = self.python_input()
+
+        self.directory.mkdir(parents=True, exist_ok=True)
+        project_path = self.directory / project_name
+
+        if project_path.exists():
+            err(f"Project already exists: {project_path}")
+            return
+
+        project_path.mkdir(parents=True)
+
+        self.create_venv(project_path)
+        python = project_path / ".venv/bin/python"
+
+        subprocess.run(
+            [str(python), "-m", "pip", "install", "fastapi", "uvicorn"],
+            check=True
+        )
+
+        files = {
+            "main.py": '''from fastapi import FastAPI
+
+    app = FastAPI()
+
+    @app.get("/")
+    def home():
+        return {"message": "Hello, FastAPI!"}
+
+    @app.get("/health")
+    def health():
+        return {"status": "ok"}
+    ''',
+
+            "requirements.txt": "fastapi\nuvicorn\n",
+
+            "README.md": f"# {project_name}\n\nA FastAPI project.\n",
+
+            ".gitignore": '''__pycache__/
+    *.py[cod]
+    .venv/
+    venv/
+    .env
+    .pytest_cache/
+    .idea/
+    .vscode/
+    '''
+        }
+
+        for filename, content in files.items():
+            (project_path / filename).write_text(content, encoding="utf-8")
+
+        ok(f"FastAPI project created: {project_path}")
+
+        run = input(f"{Fore.CYAN}Run FastAPI project? (y/n): {Style.RESET_ALL}").strip().lower()
+
+        if run == "y":
+            subprocess.Popen(
+                [
+                    str(python),
+                    "-m",
+                    "uvicorn",
+                    "main:app",
+                    "--reload"
+                ],
+                cwd=project_path
+            )
+
 
     def react(self):
-        print("React")
+        project_name = self.python_input()
+
+        self.directory.mkdir(parents=True, exist_ok=True)
+        project_path = self.directory / project_name
+
+        if project_path.exists():
+            err(f"Project already exists: {project_path}")
+            return
+
+        subprocess.run(
+            [
+                "npm",
+                "create",
+                "vite@latest",
+                project_name,
+                "--",
+                "--template",
+                "react"
+            ],
+            cwd=self.directory,
+            check=True
+        )
+
+        ok(f"React project created: {project_path}")
+
+        run = input(f"{Fore.CYAN}Run React project? (y/n): {Style.RESET_ALL}").strip().lower()
+
+        if run == "y":
+            subprocess.run(["npm", "install"], cwd=project_path, check=True)
+            subprocess.Popen(["npm", "run", "dev"], cwd=project_path)
+
 
     def vue(self):
-        print("Vue")
+        project_name = self.python_input()
+
+        self.directory.mkdir(parents=True, exist_ok=True)
+        project_path = self.directory / project_name
+
+        if project_path.exists():
+            err(f"Project already exists: {project_path}")
+            return
+
+        subprocess.run(
+            [
+                "npm",
+                "create",
+                "vite@latest",
+                project_name,
+                "--",
+                "--template",
+                "vue"
+            ],
+            cwd=self.directory,
+            check=True
+        )
+
+        ok(f"Vue project created: {project_path}")
+
+        run = input(f"{Fore.CYAN}Run Vue project? (y/n): {Style.RESET_ALL}").strip().lower()
+
+        if run == "y":
+            subprocess.run(["npm", "install"], cwd=project_path, check=True)
+            subprocess.Popen(["npm", "run", "dev"], cwd=project_path)
+
 
     def node(self):
-        print("Node.js")
+        project_name = self.python_input()
+
+        self.directory.mkdir(parents=True, exist_ok=True)
+        project_path = self.directory / project_name
+
+        if project_path.exists():
+            err(f"Project already exists: {project_path}")
+            return
+
+        project_path.mkdir(parents=True)
+        (project_path / "src").mkdir()
+
+        files = {
+            "src/index.js": '''console.log("Hello, Node.js!");
+    ''',
+
+            "package.json": f'''{{
+    "name": "{project_name.lower().replace(" ", "-")}",
+    "version": "1.0.0",
+    "description": "A Node.js project",
+    "main": "src/index.js",
+    "scripts": {{
+        "start": "node src/index.js"
+    }}
+    }}
+    ''',
+
+            "README.md": f"# {project_name}\n\nA Node.js project.\n",
+
+            ".gitignore": '''node_modules/
+    .env
+    dist/
+    '''
+        }
+
+        for filename, content in files.items():
+            (project_path / filename).write_text(content, encoding="utf-8")
+
+        ok(f"Node.js project created: {project_path}")
+
+        run = input(f"{Fore.CYAN}Run Node.js project? (y/n): {Style.RESET_ALL}").strip().lower()
+
+        if run == "y":
+            subprocess.Popen(["npm", "start"], cwd=project_path)
+
 
     def rust(self):
-        print("Rust")
+        project_name = self.python_input()
+
+        self.directory.mkdir(parents=True, exist_ok=True)
+        project_path = self.directory / project_name
+
+        if project_path.exists():
+            err(f"Project already exists: {project_path}")
+            return
+
+        subprocess.run(
+            ["cargo", "new", project_name, "--bin"],
+            cwd=self.directory,
+            check=True
+        )
+
+        ok(f"Rust project created: {project_path}")
+
+        run = input(f"{Fore.CYAN}Run Rust project? (y/n): {Style.RESET_ALL}").strip().lower()
+
+        if run == "y":
+            subprocess.Popen(["cargo", "run"], cwd=project_path)
+
 
     def cpp(self):
-        print("C++")
+        project_name = self.python_input()
+
+        self.directory.mkdir(parents=True, exist_ok=True)
+        project_path = self.directory / project_name
+
+        if project_path.exists():
+            err(f"Project already exists: {project_path}")
+            return
+
+        (project_path / "src").mkdir(parents=True)
+        (project_path / "include").mkdir()
+
+        files = {
+            "src/main.cpp": '''#include <iostream>
+
+    int main() {
+        std::cout << "Hello, C++!" << std::endl;
+        return 0;
+    }
+    ''',
+
+            "CMakeLists.txt": f'''cmake_minimum_required(VERSION 3.20)
+
+    project({project_name})
+
+    set(CMAKE_CXX_STANDARD 17)
+    set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+    add_executable({project_name} src/main.cpp)
+    ''',
+
+            "README.md": f"# {project_name}\n\nA C++ project using CMake.\n",
+
+            ".gitignore": '''build/
+    cmake-build-*/
+    '''
+        }
+
+        for filename, content in files.items():
+            (project_path / filename).write_text(content, encoding="utf-8")
+
+        ok(f"C++ project created: {project_path}")
+
+        run = input(f"{Fore.CYAN}Build and run C++ project? (y/n): {Style.RESET_ALL}").strip().lower()
+
+        if run == "y":
+            build_path = project_path / "build"
+            build_path.mkdir(exist_ok=True)
+
+            subprocess.run(
+                ["cmake", "-S", str(project_path), "-B", str(build_path)],
+                check=True
+            )
+
+            subprocess.run(
+                ["cmake", "--build", str(build_path)],
+                check=True
+            )
+
+            subprocess.Popen(
+                [str(build_path / project_name)],
+                cwd=project_path
+            )
+
 
     def cli(self):
-        print("CLI")
+        project_name = self.python_input()
 
+        self.directory.mkdir(parents=True, exist_ok=True)
+        project_path = self.directory / project_name
+
+        if project_path.exists():
+            err(f"Project already exists: {project_path}")
+            return
+
+        (project_path / "src").mkdir(parents=True)
+
+        files = {
+            "main.py": '''import argparse
+
+    def main():
+        parser = argparse.ArgumentParser(
+            description="CLI application"
+        )
+
+        parser.add_argument(
+            "--name",
+            default="World",
+            help="Name to greet"
+        )
+
+        args = parser.parse_args()
+
+        print(f"Hello, {args.name}!")
+
+    if __name__ == "__main__":
+        main()
+    ''',
+
+            "src/__init__.py": "",
+
+            "requirements.txt": "",
+
+            "README.md": f"# {project_name}\n\nA Python CLI project.\n",
+
+            ".gitignore": '''__pycache__/
+    *.py[cod]
+    .venv/
+    venv/
+    .env
+    '''
+        }
+
+        for filename, content in files.items():
+            (project_path / filename).write_text(content, encoding="utf-8")
+
+        self.create_venv(project_path)
+        python = project_path / ".venv/bin/python"
+
+        ok(f"CLI project created: {project_path}")
+
+        run = input(f"{Fore.CYAN}Run CLI project? (y/n): {Style.RESET_ALL}").strip().lower()
+
+        if run == "y":
+            subprocess.Popen([str(python), "main.py"], cwd=project_path)
         
 class JsonManager:
     def create(self , json_file):
