@@ -384,7 +384,6 @@ if __name__ == "__main__":
                 cwd=project_path
             )
 
-
     def react(self):
         project_name = self.python_input()
 
@@ -395,27 +394,60 @@ if __name__ == "__main__":
             err(f"Project already exists: {project_path}")
             return
 
-        subprocess.run(
-            [
-                "npm",
-                "create",
-                "vite@latest",
-                project_name,
-                "--",
-                "--template",
-                "react"
-            ],
-            cwd=self.directory,
-            check=True
-        )
+        try:
+            subprocess.run(
+                [
+                    "npm",
+                    "create",
+                    "vite@latest",
+                    project_name,
+                    "--",
+                    "--template",
+                    "react"
+                ],
+                cwd=self.directory,
+                check=True
+            )
 
-        ok(f"React project created: {project_path}")
+            ok(f"React project created: {project_path}")
 
-        run = input(f"{Fore.CYAN}Run React project? (y/n): {Style.RESET_ALL}").strip().lower()
+            subprocess.run(
+                ["npm", "install"],
+                cwd=project_path,
+                check=True
+            )
 
-        if run == "y":
-            subprocess.run(["npm", "install"], cwd=project_path, check=True)
-            subprocess.Popen(["npm", "run", "dev"], cwd=project_path)
+            ok("Dependencies installed successfully.")
+
+            info("Starting React development server...")
+
+            process = subprocess.Popen(
+                ["npm", "run", "dev"],
+                cwd=project_path
+            )
+
+            warn_2("Press Ctrl+C to stop the development server.")
+
+            try:
+                process.wait()
+
+            except KeyboardInterrupt:
+                warn("Stopping React development server...")
+                process.terminate()
+
+                try:
+                    process.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    process.wait()
+
+                ok("React development server stopped.")
+
+        except subprocess.CalledProcessError as e:
+            err(f"Command failed with exit code: {e.returncode}")
+
+        except FileNotFoundError:
+            err("npm was not found. Please install Node.js and npm.")
 
 
     def vue(self):
@@ -428,28 +460,60 @@ if __name__ == "__main__":
             err(f"Project already exists: {project_path}")
             return
 
-        subprocess.run(
-            [
-                "npm",
-                "create",
-                "vite@latest",
-                project_name,
-                "--",
-                "--template",
-                "vue"
-            ],
-            cwd=self.directory,
-            check=True
-        )
+        try:
+            subprocess.run(
+                [
+                    "npm",
+                    "create",
+                    "vite@latest",
+                    project_name,
+                    "--",
+                    "--template",
+                    "vue"
+                ],
+                cwd=self.directory,
+                check=True
+            )
 
-        ok(f"Vue project created: {project_path}")
+            ok(f"Vue project created: {project_path}")
 
-        run = input(f"{Fore.CYAN}Run Vue project? (y/n): {Style.RESET_ALL}").strip().lower()
+            subprocess.run(
+                ["npm", "install"],
+                cwd=project_path,
+                check=True
+            )
 
-        if run == "y":
-            subprocess.run(["npm", "install"], cwd=project_path, check=True)
-            subprocess.Popen(["npm", "run", "dev"], cwd=project_path)
+            ok("Dependencies installed successfully.")
 
+            info("Starting Vue development server...")
+
+            process = subprocess.Popen(
+                ["npm", "run", "dev"],
+                cwd=project_path
+            )
+
+            warn_2("Press Ctrl+C to stop the development server.")
+
+            try:
+                process.wait()
+
+            except KeyboardInterrupt:
+                warn("Stopping Vue development server...")
+                process.terminate()
+
+                try:
+                    process.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    process.wait()
+
+                ok("Vue development server stopped.")
+
+        except subprocess.CalledProcessError as e:
+            err(f"Command failed with exit code: {e.returncode}")
+
+        except FileNotFoundError:
+            err("npm was not found. Please install Node.js and npm.")
 
     def node(self):
         project_name = self.python_input()
@@ -603,24 +667,24 @@ if __name__ == "__main__":
         files = {
             "main.py": '''import argparse
 
-    def main():
-        parser = argparse.ArgumentParser(
-            description="CLI application"
-        )
+def main():
+    parser = argparse.ArgumentParser(
+        description="CLI application"
+    )
 
-        parser.add_argument(
-            "--name",
-            default="World",
-            help="Name to greet"
-        )
+    parser.add_argument(
+        "--name",
+        default="World",
+        help="Name to greet"
+    )
 
-        args = parser.parse_args()
+    args = parser.parse_args()
 
-        print(f"Hello, {args.name}!")
+    print(f"Hello, {args.name}!")
 
-    if __name__ == "__main__":
-        main()
-    ''',
+if __name__ == "__main__":
+    main()
+''',
 
             "src/__init__.py": "",
 
